@@ -6,6 +6,10 @@ defmodule Lti_1p3 do
   alias Lti_1p3.Deployment
   alias Lti_1p3.Jwk
 
+  def get_deployment_id_from_launch(lti_params) do
+    Map.get(lti_params, "https://purl.imsglobal.org/spec/lti/claim/deployment_id")
+  end
+
   def create_new_registration(attrs) do
     %Registration{}
     |> Registration.changeset(attrs)
