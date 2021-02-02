@@ -29,6 +29,7 @@ defmodule Lti_1p3.MixProject do
       {:excoveralls, "~> 0.10", only: :test},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},
       {:httpoison, "~> 1.6"},
+      {:jason, "~> 1.0"},
       {:joken, "~> 2.2.0"},
       {:mox, "~> 0.5", only: :test},
       {:postgrex, ">= 0.0.0"},
