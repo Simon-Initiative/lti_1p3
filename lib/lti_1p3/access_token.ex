@@ -35,7 +35,7 @@ defmodule Lti_1p3.AccessToken do
         Logger.error("Registration for deployment id #{deployment_id} not found")
         {:error, "unknown deployment id"}
 
-      {_, registration, _} ->
+      {registration, _} ->
 
         client_assertion = create_client_assertion(host, registration)
         issue_request(registration.auth_token_url, client_assertion, scopes)
