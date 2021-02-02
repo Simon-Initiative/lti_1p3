@@ -11,7 +11,7 @@ defmodule Lti_1p3.LaunchValidation do
   @doc """
   Validates an incoming LTI 1.3 launch and caches the launch params in the session if successful.
   """
-  @spec validate(params(), validate_opts()) :: {:ok, any()} | {:error, %{optional(atom()) => any(), reason: atom(), msg: String.t()}}
+  @spec validate(params(), validate_opts()) :: {:ok, any(), binary()} | {:error, %{optional(atom()) => any(), reason: atom(), msg: String.t()}}
   def validate(params, session_state, _opts \\ []) do
     with {:ok} <- validate_oidc_state(params, session_state),
          {:ok, registration} <- validate_registration(params),
