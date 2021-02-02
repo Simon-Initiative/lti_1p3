@@ -19,14 +19,14 @@ defmodule Lti_1p3.Config do
   @doc """
   Gets the environment configuration for key :lti_1p3 in app's environment
   """
-  @spec env_config(atom()) :: config()
-  def env_config(otp_app \\ :lti_1p3), do: Application.fetch_env!(otp_app, :lti_1p3)
+  @spec env_config() :: config()
+  def env_config(), do: Application.get_all_env(:lti_1p3)
 
   @doc """
   Gets the configuration which is the env merged with default configs
   """
-  @spec get_config(atom()) :: config()
-  def get_config(otp_app \\ :lti_1p3), do: merge_configs(default_config(), env_config(otp_app))
+  @spec get_config() :: config()
+  def get_config(), do: merge_configs(default_config(), env_config())
 
   # @doc """
   # Gets the key value from the given configuration.

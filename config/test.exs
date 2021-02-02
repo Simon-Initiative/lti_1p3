@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :lti_1p3, :lti_1p3,
+config :lti_1p3,
   repo: Lti_1p3.Test.Repo,
   http_client: Lti_1p3.Test.MockHTTPoison
 
