@@ -1,0 +1,16 @@
+version: '3.5'
+services:
+  postgres:
+    image: postgres
+    container_name: lti_postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
