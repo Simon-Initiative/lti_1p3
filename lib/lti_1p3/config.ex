@@ -14,6 +14,7 @@ defmodule Lti_1p3.Config do
   @spec default_config() :: config()
   def default_config(), do: [
     http_client: HTTPoison,
+    registration: Lti_1p3.Registration,
   ]
 
   @doc """
@@ -116,6 +117,17 @@ defmodule Lti_1p3.Config do
   @spec user!(config() | nil) :: atom()
   def user!(config) do
     get(config, :user) || raise ConfigError, message: "No `:user` configuration option found."
+  end
+
+  @doc """
+  Retrieves the registration schema module from the config, or raises an exception.
+  """
+  @spec registration() :: atom()
+  def registration(), do: registration(get_config())
+
+  @spec registration(config() | nil) :: atom()
+  def registration(config) do
+    get(config, :registration)
   end
 
 end

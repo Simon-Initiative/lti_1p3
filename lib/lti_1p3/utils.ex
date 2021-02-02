@@ -2,15 +2,14 @@ defmodule Lti_1p3.Utils do
   import Ecto.Query, warn: false
   import Lti_1p3.Config
 
-  alias Lti_1p3.Registration
   alias Lti_1p3.Jwk
 
-  def registration_key_set_url(%Registration{key_set_url: key_set_url}) do
+  def registration_key_set_url(%{key_set_url: key_set_url}) do
     {:ok, key_set_url}
   end
 
   def get_registration_by_issuer_client_id(issuer, client_id) do
-    repo!().one from registration in Registration,
+    repo!().one from registration in registration(),
       where: registration.issuer == ^ issuer and registration.client_id == ^client_id,
       select: registration
   end

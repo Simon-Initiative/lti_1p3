@@ -1,6 +1,7 @@
 defmodule Lti_1p3.Jwk do
   use Ecto.Schema
   import Ecto.Changeset
+  import Lti_1p3.Config
 
   schema "lti_1p3_jwks" do
     field :pem, :string
@@ -9,7 +10,7 @@ defmodule Lti_1p3.Jwk do
     field :kid, :string
     field :active, :boolean, default: false
 
-    has_many :registrations, Lti_1p3.Registration, foreign_key: :tool_jwk_id
+    has_many :registrations, registration(), foreign_key: :tool_jwk_id
 
     timestamps(type: :utc_datetime)
   end

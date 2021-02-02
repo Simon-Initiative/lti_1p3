@@ -2,7 +2,6 @@ defmodule Lti_1p3 do
   import Ecto.Query, warn: false
   import Lti_1p3.Config
 
-  alias Lti_1p3.Registration
   alias Lti_1p3.Deployment
   alias Lti_1p3.Jwk
 
@@ -11,8 +10,8 @@ defmodule Lti_1p3 do
   end
 
   def create_new_registration(attrs) do
-    %Registration{}
-    |> Registration.changeset(attrs)
+    struct(registration())
+    |> registration().changeset(attrs)
     |> repo!().insert()
   end
 
@@ -40,10 +39,10 @@ defmodule Lti_1p3 do
   end
 
   def get_rd_by_deployment_id(deployment_id) do
-    repo!().one from registration in Registration,
-      join: deployment in Deployment, on: deployment.registration_id == registration.id,
-      where: deployment.deployment_id == ^deployment_id,
-      select: {registration, deployment}
+    repo!().one from r in registration(),
+      join: d in Deployment, on: d.registration_id == r.id,
+      where: d.deployment_id == ^deployment_id,
+      select: {r, d}
   end
 
   @doc """
