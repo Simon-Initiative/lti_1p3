@@ -9,6 +9,9 @@ defmodule Lti_1p3.AuthorizationRedirectTest do
   alias Lti_1p3.LoginHint
   alias Lti_1p3.LoginHints
 
+  # Make sure mocks are verified when the test exits
+  setup :verify_on_exit!
+
   describe "authorize_redirect" do
     test "authorizes a valid redirect request" do
       %{

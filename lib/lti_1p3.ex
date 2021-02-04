@@ -68,7 +68,7 @@ defmodule Lti_1p3 do
   Caches LTI 1.3 params map using the given key. Assumes lti_params contains standard LTI fields
   including "exp" for expiration date
   ## Examples
-      iex> cache_lti_params!(key, lti_params)
+      iex> Lti_1p3.cache_lti_params!("some-key", %{"some" => "param"})
       %Lti_1p3.LtiParams{}
   """
   def cache_lti_params!(key, lti_params) do
