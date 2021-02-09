@@ -1,25 +1,20 @@
 defmodule Lti_1p3.Nonces do
-  require Logger
-
-  # nonces only persist for a day
-  # 86400 seconds = 24 hours
-  @max_nonce_ttl_sec 86_400
-
-  import Ecto.Query, warn: false
   import Lti_1p3.Config
 
   alias Lti_1p3.Nonce
 
+  require Logger
+
   @doc """
   Gets a single nonce.
-  Raises `Ecto.NoResultsError` if the Nonce does not exist.
+  Returns nil if the Nonce does not exist.
   ## Examples
-      iex> get_nonce!(123)
+      iex> get_nonce(123)
       %Nonce{}
-      iex> get_nonce!(456)
-      ** (Ecto.NoResultsError)
+      iex> get_nonce(456)
+      nil
   """
-  def get_nonce!(id), do: repo!().get!(Nonce, id)
+  def get_nonce(id), do: provider!().get_nonce(id)
 
   @doc """
   Creates a nonce. Returns a error if the nonce already exists
@@ -29,11 +24,7 @@ defmodule Lti_1p3.Nonces do
       iex> create_nonce("bad value", "domain")
       {:error, %Ecto.Changeset{}}
   """
-  def create_nonce(value, domain \\ nil) do
-    %Nonce{}
-    |> Nonce.changeset(%{value: value, domain: domain})
-    |> repo!().insert()
-  end
+  def create_nonce(value, domain \\ nil), do: provider!().create_nonce(%Nonce{value: value, domain: domain})
 
   @doc """
   Removes all nonces older than the configured @max_nonce_ttl_sec value
@@ -41,12 +32,11 @@ defmodule Lti_1p3.Nonces do
   def cleanup_nonce_store() do
     Logger.info("Cleaning up expired LTI 1.3 nonces...")
 
-    nonce_expiry = Timex.now |> Timex.subtract(Timex.Duration.from_seconds(@max_nonce_ttl_sec))
-    result = repo!().delete_all from(n in Nonce, where: n.inserted_at < ^nonce_expiry)
+    nonce_ttl_sec = Lti_1p3.Config.get(:nonce_ttl_sec)
+    nonce_expiry = Timex.now |> Timex.subtract(Timex.Duration.from_seconds(nonce_ttl_sec))
+    provider!().delete_expired_nonces(nonce_expiry)
 
     Logger.info("Nonce cleanup complete.")
-
-    result
   end
 
 end

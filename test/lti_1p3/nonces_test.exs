@@ -1,19 +1,12 @@
 defmodule Lti_1p3.NoncesTest do
   use Lti_1p3.Test.TestCase
 
-  alias Lti_1p3.Nonce
+  import Lti_1p3.DataProviders.EctoProvider.Config
+
+  alias Lti_1p3.DataProviders.EctoProvider
   alias Lti_1p3.Nonces
 
   describe "lti 1.3 nonces" do
-    test "should get existing nonce" do
-      {:ok, nonce} = %Nonce{}
-      |> Nonce.changeset(%{value: "some-value", domain: "some-domain"})
-      |> Repo.insert()
-
-      assert Nonces.get_nonce!(nonce.id).value == "some-value"
-      assert Nonces.get_nonce!(nonce.id).domain == "some-domain"
-    end
-
     test "should create new nonce with default domain nil" do
       {:ok, nonce} = Nonces.create_nonce("some-value")
 
@@ -40,29 +33,26 @@ defmodule Lti_1p3.NoncesTest do
     test "should fail to create new nonce if one already exists with specified domain" do
       {:ok, _nonce} = Nonces.create_nonce("some-value", "some-domain")
 
-      assert {:error, %Ecto.Changeset{}} = Nonces.create_nonce("some-value", "some-domain")
+      assert {:error, %Lti_1p3.DataProviderError{msg: "value: has already been taken"}} = Nonces.create_nonce("some-value", "some-domain")
     end
 
     test "should cleanup expired nonces" do
       {:ok, nonce} = Nonces.create_nonce("some-value")
 
       # verify the nonce exists before cleanup
-      assert Nonces.get_nonce!(nonce.id) == nonce
+      assert Nonces.get_nonce(nonce.id) == nonce
 
       # fake the nonce was created a day + 1 hour ago
       a_day_before = Timex.now |> Timex.subtract(Timex.Duration.from_hours(25))
-      nonce
+      repo!().get(EctoProvider.Nonce, nonce.id)
       |> Ecto.Changeset.cast(%{inserted_at: a_day_before}, [:inserted_at])
-      |> Repo.update!
+      |> repo!().update!
 
       # cleanup
       Nonces.cleanup_nonce_store()
 
-      assert_raise Ecto.NoResultsError, ~r/^expected at least one result but got none in query/, fn ->
-        # no more nonce
-        Nonces.get_nonce!(nonce.id)
-      end
+      # no more nonce
+      assert Nonces.get_nonce(nonce.id) == nil
     end
   end
-
 end

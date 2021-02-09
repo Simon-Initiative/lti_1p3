@@ -1,8 +1,11 @@
 use Mix.Config
 
 config :lti_1p3,
-  repo: Lti_1p3.Test.Repo,
-  http_client: Lti_1p3.Test.MockHTTPoison
+  http_client: Lti_1p3.Test.MockHTTPoison,
+  provider: Lti_1p3.DataProviders.EctoProvider,
+  ecto_provider: [
+    repo: Lti_1p3.Test.Repo,
+  ]
 
 config :lti_1p3, Lti_1p3.Test.Repo,
   username: System.get_env("TEST_DB_USER", "postgres"),

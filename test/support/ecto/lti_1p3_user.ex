@@ -60,18 +60,18 @@ defmodule Lti_1p3.Test.Ecto.Lti_1p3_User do
 end
 
 # define implementations required for LTI 1.3 library integration
-defimpl Lti_1p3.Lti_1p3_User, for: Lti_1p3.Test.Ecto.Lti_1p3_User do
+defimpl Lti_1p3.Tool.Lti_1p3_User, for: Lti_1p3.Test.Ecto.Lti_1p3_User do
   import Ecto.Query, warn: false
 
   def get_platform_roles(user) do
     user.platform_roles
     |> String.split(",")
-    |> Lti_1p3.PlatformRoles.get_roles_by_uris()
+    |> Lti_1p3.Tool.PlatformRoles.get_roles_by_uris()
   end
 
   def get_context_roles(user, _context_id) do
     user.platform_roles
     |> String.split(",")
-    |> Lti_1p3.ContextRoles.get_roles_by_uris()
+    |> Lti_1p3.Tool.ContextRoles.get_roles_by_uris()
   end
 end

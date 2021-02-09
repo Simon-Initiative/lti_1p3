@@ -38,7 +38,7 @@ defmodule Lti_1p3.Test.TestHelpers do
         active: true,
       })
 
-    {:ok, jwk} = Lti_1p3.create_new_jwk(params)
+    jwk = struct(Lti_1p3.Jwk, params)
 
     jwk
   end
@@ -84,17 +84,17 @@ defmodule Lti_1p3.Test.TestHelpers do
     end
 
     # create a registration
-    {:ok, registration} = Lti_1p3.create_new_registration(registration_params)
+    registration = struct(Lti_1p3.Tool.Registration, registration_params)
 
     # create a deployment
-    {:ok, _deployment} = Lti_1p3.create_new_deployment(%{
+    deployment = struct(Lti_1p3.Tool.Deployment, %{
       deployment_id: deployment_id,
       registration_id: registration.id
     })
 
     params = %{"state" => state, "id_token" => id_token}
 
-    %{params: params, session_state: session_state, registration: registration, jwk: jwk, state_uuid: state_uuid}
+    %{params: params, session_state: session_state, registration: registration, deployment: deployment, jwk: jwk, state_uuid: state_uuid}
   end
 
   def all_default_claims() do
@@ -211,10 +211,10 @@ end
 
 # notice: this protocol mock implementation must reside in this support directory
 # because of protocol consolidation. See https://hexdocs.pm/elixir/master/Protocol.html#module-consolidation
-defmodule Lti_1p3.Lti_1p3_User.Mock do
-  alias Lti_1p3.Lti_1p3_User
-  alias Lti_1p3.PlatformRoles
-  alias Lti_1p3.ContextRoles
+defmodule Lti_1p3.Tool.Lti_1p3_User.Mock do
+  alias Lti_1p3.Tool.Lti_1p3_User
+  alias Lti_1p3.Tool.PlatformRoles
+  alias Lti_1p3.Tool.ContextRoles
 
   defstruct [:platform_role_uris, :context_role_uris]
 

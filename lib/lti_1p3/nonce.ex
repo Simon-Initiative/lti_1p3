@@ -1,19 +1,20 @@
 defmodule Lti_1p3.Nonce do
-  use Ecto.Schema
-  import Ecto.Changeset
+  @enforce_keys [:value]
+  defstruct [:id, :value, :domain]
 
-  schema "lti_1p3_nonces" do
-    field :value, :string
-    field :domain, :string
+  @type t() :: %__MODULE__{
+    id: integer(),
+    value: String.t(),
+    domain: String.t(),
+  }
 
-    timestamps(type: :utc_datetime)
+  def from(attrs) do
+    struct(Lti_1p3.Nonce, attrs)
   end
 
-  @doc false
-  def changeset(nonce, attrs) do
+  def to_map(%Lti_1p3.Nonce{} = nonce) do
     nonce
-    |> cast(attrs, [:value, :domain])
-    |> validate_required([:value])
-    |> unique_constraint(:value, name: :value_domain_index)
+    |> Map.from_struct()
+    |> Map.take(Lti_1p3.Nonce.__struct__() |> Map.keys())
   end
 end

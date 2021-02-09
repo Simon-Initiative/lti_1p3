@@ -2,16 +2,8 @@ defmodule Lti_1p3.Utils do
   import Ecto.Query, warn: false
   import Lti_1p3.Config
 
-  alias Lti_1p3.Jwk
-
   def registration_key_set_url(%{key_set_url: key_set_url}) do
     {:ok, key_set_url}
-  end
-
-  def get_registration_by_issuer_client_id(issuer, client_id) do
-    repo!().one from registration in registration(),
-      where: registration.issuer == ^ issuer and registration.client_id == ^client_id,
-      select: registration
   end
 
   def extract_param(params, name) do
@@ -135,13 +127,6 @@ defmodule Lti_1p3.Utils do
           |> JOSE.JWK.from
 
         {:ok, public_key}
-    end
-  end
-
-  def get_active_jwk() do
-    case repo!().all(from k in Jwk, where: k.active == true, order_by: [desc: k.id], limit: 1) do
-      [head | _] -> head
-      _ -> []
     end
   end
 

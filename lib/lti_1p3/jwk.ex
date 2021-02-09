@@ -1,24 +1,23 @@
 defmodule Lti_1p3.Jwk do
-  use Ecto.Schema
-  import Ecto.Changeset
-  import Lti_1p3.Config
+  @enforce_keys [:pem, :typ, :alg, :kid]
+  defstruct [:id, :pem, :typ, :alg, :kid, :active]
 
-  schema "lti_1p3_jwks" do
-    field :pem, :string
-    field :typ, :string
-    field :alg, :string
-    field :kid, :string
-    field :active, :boolean, default: false
+  @type t() :: %__MODULE__{
+    id: integer(),
+    pem: String.t(),
+    typ: String.t(),
+    alg: String.t(),
+    kid: String.t(),
+    active: boolean()
+  }
 
-    has_many :registrations, registration(), foreign_key: :tool_jwk_id
-
-    timestamps(type: :utc_datetime)
+  def from(attrs) do
+    struct(Lti_1p3.Jwk, attrs)
   end
 
-  @doc false
-  def changeset(jwk, attrs \\ %{}) do
+  def to_map(%Lti_1p3.Jwk{} = jwk) do
     jwk
-    |> cast(attrs, [:pem, :typ, :alg, :kid, :active])
-    |> validate_required([:pem, :typ, :alg, :kid])
+    |> Map.from_struct()
+    |> Map.take(Lti_1p3.Jwk.__struct__() |> Map.keys())
   end
 end
