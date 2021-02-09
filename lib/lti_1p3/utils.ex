@@ -88,8 +88,12 @@ defmodule Lti_1p3.Utils do
     case Lti_1p3.Nonces.create_nonce(jwt["nonce"], domain) do
       {:ok, _nonce} ->
         {:ok}
-      {:error, %{ errors: [ value: { _msg, [{:constraint, :unique} | _]}]}} ->
+
+      {:error, %Lti_1p3.DataProviderError{reason: :unique_constraint_violation}} ->
         {:error, %{reason: :invalid_nonce, msg: "Duplicate nonce"}}
+
+      {:error, %Lti_1p3.DataProviderError{msg: msg}} ->
+        {:error, %{reason: :invalid_nonce, msg: msg}}
     end
   end
 

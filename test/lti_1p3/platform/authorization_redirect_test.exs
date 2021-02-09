@@ -11,7 +11,7 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
   alias Lti_1p3.Platform.PlatformInstance
 
   # Make sure mocks are verified when the test exits
-  setup :verify_on_exit!
+  setup [:create_active_jwk, :verify_on_exit!]
 
   describe "authorize_redirect" do
     test "authorizes a valid redirect request" do
@@ -27,7 +27,7 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
       assert {:ok, ^target_link_uri, ^state, id_token} = AuthorizationRedirect.authorize_redirect(params, user, issuer, deployment_id)
 
       # validate the id_token returned is signed correctly
-      active_jwk = provider!().get_active_jwk()
+      {:ok, active_jwk} = provider!().get_active_jwk()
       MockHTTPoison
       |> expect(:get, fn _url -> mock_get_jwk_keys(active_jwk) end)
 
@@ -119,6 +119,12 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
       # try again with the same nonce
       assert {:error, %{reason: :invalid_nonce, msg: "Duplicate nonce"}} == AuthorizationRedirect.authorize_redirect(params, user, issuer, deployment_id)
     end
+  end
+
+  def create_active_jwk(_context) do
+    {:ok, jwk} = provider!().create_jwk(jwk_fixture())
+
+    %{jwk: jwk}
   end
 
   def generate_lti_platform_stubs(args \\ %{}) do

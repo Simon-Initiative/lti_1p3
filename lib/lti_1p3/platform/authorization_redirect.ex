@@ -28,9 +28,9 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
              {:ok} <- validate_current_user(params, current_user),
              {:ok} <- validate_client_id(params, client_id),
              {:ok} <- validate_redirect_uri(params, valid_redirect_uris),
-             {:ok} <- validate_nonce(params, "authorize_redirect")
+             {:ok} <- validate_nonce(params, "authorize_redirect"),
+             {:ok, active_jwk} <- provider!().get_active_jwk()
         do
-          active_jwk = provider!().get_active_jwk()
           custom_header = %{"kid" => active_jwk.kid}
           signer = Joken.Signer.create("RS256", %{"pem" => active_jwk.pem}, custom_header)
           user_details = Map.from_struct(current_user)

@@ -2,7 +2,7 @@ defmodule Lti_1p3.DataProvider do
   alias Lti_1p3.Jwk
   alias Lti_1p3.Nonce
 
-  @callback get_active_jwk() :: %Jwk{} | nil
+  @callback get_active_jwk() :: {:ok, %Jwk{}} | {:error, Lti_1p3.DataProviderError.t()}
   @callback create_jwk(%Jwk{}) :: {:ok, %Jwk{}} | {:error, Lti_1p3.DataProviderError.t()}
   @callback get_nonce(integer()) :: %Nonce{} | nil
   @callback create_nonce(%Nonce{}) :: {:ok, %Nonce{}} | {:error, Lti_1p3.DataProviderError.t()}
@@ -38,9 +38,14 @@ end
 
 defmodule Lti_1p3.DataProviderError do
   @moduledoc false
-  defstruct [:msg]
+  defstruct [:msg, :reason]
+
+  @type error_reason() :: :unique_constraint_violation
+    | :not_found
+    | :unknown
 
   @type t() :: %__MODULE__{
     msg: String.t(),
+    reason: error_reason(),
   }
 end

@@ -30,8 +30,8 @@ defmodule Lti_1p3.DataProviders.EctoProvider do
   @impl DataProvider
   def get_active_jwk() do
     case repo!().all(from k in schema(:jwk), where: k.active == true, order_by: [desc: k.id], limit: 1) do
-      [head | _] -> unmarshal_to(head, Jwk)
-      _ -> []
+      [head | _] -> {:ok, unmarshal_to(head, Jwk)}
+      _ -> {:error, %Lti_1p3.DataProviderError{msg: "No active Jwk found", reason: :not_found}}
     end
   end
 
@@ -46,7 +46,12 @@ defmodule Lti_1p3.DataProviders.EctoProvider do
     struct(schema(:nonce))
     |> schema(:nonce).changeset(attrs)
     |> repo!().insert()
-    |> unmarshal_to(Nonce)
+    |> case do
+      {:error, %Ecto.Changeset{ errors: [ value: { _msg, [{:constraint, :unique} | _]}]} = changeset} ->
+        {:error, %Lti_1p3.DataProviderError{msg: maybe_changeset_error_to_str(changeset), reason: :unique_constraint_violation}}
+      nonce ->
+        unmarshal_to(nonce, Nonce)
+    end
   end
 
   @impl DataProvider
@@ -176,8 +181,8 @@ defmodule Lti_1p3.DataProviders.EctoProvider do
     {:ok, struct_type.from(map)}
   end
 
-  defp unmarshal_to({:error, changeset}, _struct_type) do
-    {:error, %DataProviderError{msg: maybe_changeset_error_to_str(changeset)}}
+  defp unmarshal_to({:error, maybe_changeset}, _struct_type) do
+    {:error, %DataProviderError{msg: maybe_changeset_error_to_str(maybe_changeset)}}
   end
 
   defp unmarshal_to(nil, _struct_type) do
