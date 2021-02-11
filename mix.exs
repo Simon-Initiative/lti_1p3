@@ -62,15 +62,11 @@ defmodule Lti_1p3.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      # "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      # "ecto.reset": ["ecto.drop", "ecto.setup"],
-      # test: ["ecto.create --quiet", "ecto.migrate", "run priv/repo/seeds.exs", "test"],
+      # runs tests and produces a coverage report
+      "test.coverage": ["ecto.create --quiet", "ecto.migrate", "run priv/repo/seeds.exs", "coveralls.html"],
 
-      # # runs tests and produces a coverage report
-      # "test.coverage": ["ecto.create --quiet", "ecto.migrate", "run priv/repo/seeds.exs", "coveralls.html"],
-
-      # # runs tests and produces a coverage report
-      # "test.coverage.xml": ["ecto.create --quiet", "ecto.migrate", "run priv/repo/seeds.exs", "coveralls.xml"],
+      # runs tests and produces a coverage report
+      "test.coverage.xml": ["ecto.create --quiet", "ecto.migrate", "run priv/repo/seeds.exs", "coveralls.xml"],
 
       # runs tests in deterministic order, only shows one failure at a time and reruns tests if any changes are made
       "test.watch": ["test.watch --stale --max-failures 1 --trace --seed 0"],
