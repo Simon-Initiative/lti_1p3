@@ -1,9 +1,7 @@
 defmodule Lti_1p3.NoncesTest do
   use Lti_1p3.Test.TestCase
 
-  import Lti_1p3.DataProviders.EctoProvider.Config
-
-  alias Lti_1p3.DataProviders.EctoProvider
+  alias Lti_1p3.DataProviders.MemoryProvider
   alias Lti_1p3.Nonces
 
   describe "lti 1.3 nonces" do
@@ -33,26 +31,26 @@ defmodule Lti_1p3.NoncesTest do
     test "should fail to create new nonce if one already exists with specified domain" do
       {:ok, _nonce} = Nonces.create_nonce("some-value", "some-domain")
 
-      assert {:error, %Lti_1p3.DataProviderError{msg: "value: has already been taken"}} = Nonces.create_nonce("some-value", "some-domain")
+      assert {:error, %Lti_1p3.DataProviderError{msg: "Nonce with value already exists"}} = Nonces.create_nonce("some-value", "some-domain")
     end
 
     test "should cleanup expired nonces" do
       {:ok, nonce} = Nonces.create_nonce("some-value")
 
       # verify the nonce exists before cleanup
-      assert Nonces.get_nonce(nonce.id) == nonce
+      assert Nonces.get_nonce(nonce.value) == nonce
 
       # fake the nonce was created a day + 1 hour ago
       a_day_before = Timex.now |> Timex.subtract(Timex.Duration.from_hours(25))
-      repo!().get(EctoProvider.Nonce, nonce.id)
-      |> Ecto.Changeset.cast(%{inserted_at: a_day_before}, [:inserted_at])
-      |> repo!().update!
+      Agent.update(MemoryProvider, fn state ->
+        %{state | nonces: state.nonces |> Map.put(MemoryProvider.nonce_key(nonce), Map.put(nonce, :inserted_at, a_day_before))}
+      end)
 
-      # cleanup
+      # run cleanup
       Nonces.cleanup_nonce_store()
 
       # no more nonce
-      assert Nonces.get_nonce(nonce.id) == nil
+      assert Nonces.get_nonce(nonce.value) == nil
     end
   end
 end

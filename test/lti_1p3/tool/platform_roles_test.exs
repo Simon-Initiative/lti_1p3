@@ -33,16 +33,30 @@ defmodule Lti_1p3.Tool.PlatformRolesTest do
       ]
     end
 
-    test "get_role returns a role with state: :loaded" do
-      role = PlatformRoles.get_role(:institution_learner)
-
-      assert Ecto.get_meta(role, :state) == :loaded
-    end
-
-    test "get_role_by_uri returns a role with state: :loaded" do
-      role = PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner")
-
-      assert Ecto.get_meta(role, :state) == :loaded
+    test "get_role_by_uri returns the correct role" do
+      assert PlatformRoles.list_roles() == [
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#None"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#AccountAdmin"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#Creator"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#SysAdmin"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#SysSupport"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#User"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Guest"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#None"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Other"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Alumni"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Member"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Mentor"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Observer"),
+        PlatformRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#ProspectiveStudent"),
+      ]
     end
 
     test "get_role returns nil for invalid role atom" do

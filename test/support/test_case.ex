@@ -16,35 +16,14 @@ defmodule Lti_1p3.Test.TestCase do
 
   using do
     quote do
-      alias Lti_1p3.Test.Repo
-
-      import Ecto
-      import Ecto.Changeset
-      import Ecto.Query
       import Lti_1p3.Test.TestHelpers
+
     end
   end
 
   setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Lti_1p3.Test.Repo)
-    Ecto.Adapters.SQL.Sandbox.mode(Lti_1p3.Test.Repo, {:shared, self()})
-
-    :ok
-  end
-
-  @doc """
-  A helper that transforms changeset errors into a map of messages.
-
-      assert {:error, changeset} = Accounts.create_author(%{password: "short"})
-      assert "password is too short" in errors_on(changeset).password
-      assert %{password: ["password is too short"]} = errors_on(changeset)
-
-  """
-  def errors_on(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
-      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-      end)
-    end)
+    {:ok, initial_state} = Lti_1p3.DataProviders.MemoryProvider.init()
+    {:ok, genserver_pid} = Lti_1p3.DataProviders.MemoryProvider.start_link(initial_state)
+    {:ok, process: genserver_pid}
   end
 end

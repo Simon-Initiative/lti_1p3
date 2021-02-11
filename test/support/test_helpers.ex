@@ -1,13 +1,18 @@
 defmodule Lti_1p3.Test.TestHelpers do
-  alias Lti_1p3.Test.Repo
-  alias Lti_1p3.Test.Ecto.Lti_1p3_User
+  import Lti_1p3.Config
+
+  alias Lti_1p3.Test.Lti_1p3_User
+  alias Lti_1p3.Jwk
+  alias Lti_1p3.Tool.Registration
+  alias Lti_1p3.Tool.Deployment
 
   Mox.defmock(Lti_1p3.Test.MockHTTPoison, for: HTTPoison.Base)
 
-  def lti_1p3_user_fixture(attrs \\ %{}) do
+  def lti_1p3_user(attrs \\ %{}) do
     params =
       attrs
       |> Enum.into(%{
+        id: 0,
         sub: "a6d5c443-1f51-4783-ba1a-7686ffe3b54a",
         name: "Ms Jane Marie Doe",
         given_name: "Jane",
@@ -16,13 +21,11 @@ defmodule Lti_1p3.Test.TestHelpers do
         picture: "https://platform.example.edu/jane.jpg",
         email: "jane#{System.unique_integer([:positive])}@platform.example.edu",
         locale: "en-US",
+        platform_roles: "http://purl.imsglobal.org/vocab/lis/v2/system/person#User,http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student",
+        context_roles: "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner",
       })
 
-    {:ok, user} =
-      Lti_1p3_User.changeset(%Lti_1p3_User{}, params)
-      |> Repo.insert()
-
-      user
+    struct!(Lti_1p3_User, params)
   end
 
   def jwk_fixture(attrs \\ %{}) do
@@ -38,63 +41,51 @@ defmodule Lti_1p3.Test.TestHelpers do
         active: true,
       })
 
-    jwk = struct(Lti_1p3.Jwk, params)
+    {:ok, jwk} = provider!().create_jwk(struct!(Jwk, params))
 
     jwk
   end
 
-  def generate_lti_stubs(args \\ %{}) do
-    jwk = jwk_fixture()
-    state_uuid = UUID.uuid4()
-    %{
-      claims: claims,
-      registration_params: registration_params,
-      deployment_id: deployment_id,
-      kid: kid,
-      state: state,
-      session_state: session_state,
-    } = %{
-      claims: all_default_claims(),
-      registration_params: %{
+  def registration_fixture(%{tool_jwk_id: tool_jwk_id} = attrs) do
+    params =
+      attrs
+      |> Enum.into(%{
         issuer: "https://lti-ri.imsglobal.org",
         client_id: "12345",
         key_set_url: "some key_set_url",
         auth_token_url: "some auth_token_url",
         auth_login_url: "some auth_login_url",
         auth_server: "some auth_server",
-        tool_jwk_id: jwk.id,
-      },
-      deployment_id: "1",
-      state: state_uuid,
-      session_state: state_uuid,
-      kid: jwk.kid,
-    } |> Map.merge(args)
+        tool_jwk_id: tool_jwk_id,
+      })
 
+     {:ok, registration} = provider!().create_registration(struct(Registration, params))
+
+     registration
+  end
+
+  def deployment_fixture(%{deployment_id: deployment_id, registration_id: registration_id} = attrs) do
+    params =
+      attrs
+      |> Enum.into(%{
+        deployment_id: deployment_id,
+        registration_id: registration_id,
+      })
+
+     {:ok, deployment} = provider!().create_deployment(struct(Deployment, params))
+
+     deployment
+  end
+
+  def generate_id_token(jwk, kid, claims) do
     # create a signer
     signer = Joken.Signer.create("RS256", %{"pem" => jwk.pem}, %{
       "kid" => kid,
     })
 
-    # claims
     {:ok, claims} = Joken.generate_claims(%{}, claims)
-    id_token = if Map.has_key?(args, :id_token) do
-      args[:id_token]
-    else
-      Joken.generate_and_sign!(%{}, claims, signer)
-    end
 
-    # create a registration
-    registration = struct(Lti_1p3.Tool.Registration, registration_params)
-
-    # create a deployment
-    deployment = struct(Lti_1p3.Tool.Deployment, %{
-      deployment_id: deployment_id,
-      registration_id: registration.id
-    })
-
-    params = %{"state" => state, "id_token" => id_token}
-
-    %{params: params, session_state: session_state, registration: registration, deployment: deployment, jwk: jwk, state_uuid: state_uuid}
+    Joken.generate_and_sign!(%{}, claims, signer)
   end
 
   def all_default_claims() do

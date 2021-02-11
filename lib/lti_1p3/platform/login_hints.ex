@@ -32,8 +32,7 @@ defmodule Lti_1p3.Platform.LoginHints do
     Logger.info("Cleaning up expired LTI 1.3 login_hints...")
 
     login_hint_ttl_sec = Lti_1p3.Config.get(:login_hint_ttl_sec)
-    login_hint_expiry = Timex.now |> Timex.subtract(Timex.Duration.from_seconds(login_hint_ttl_sec))
-    provider!().delete_expired_login_hints(login_hint_expiry)
+    provider!().delete_expired_login_hints(login_hint_ttl_sec)
 
     Logger.info("Login_hint cleanup complete.")
   end

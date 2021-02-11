@@ -1,5 +1,4 @@
 defmodule Lti_1p3.Utils do
-  import Ecto.Query, warn: false
   import Lti_1p3.Config
 
   def registration_key_set_url(%{key_set_url: key_set_url}) do

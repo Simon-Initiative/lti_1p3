@@ -3,7 +3,7 @@ defmodule Lti_1p3.Tool.LaunchValidation do
   import Lti_1p3.Utils
 
   @message_validators [
-    Lti_1p3.MessageValidators.ResourceMessageValidator
+    Lti_1p3.Tool.MessageValidators.ResourceMessageValidator
   ]
 
   @type params() :: %{state: binary(), id_token: binary()}

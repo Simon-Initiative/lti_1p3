@@ -30,6 +30,6 @@ defmodule Lti_1p3 do
       iex> Lti_1p3.fetch_lti_params("bad-key")
       nil
   """
-  def fetch_lti_params(key), do: provider!().get_lti_params_by_key(key: key)
+  def fetch_lti_params(key), do: provider!().get_lti_params_by_key(key)
 
 end

@@ -70,7 +70,7 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
         user: user,
       } = generate_lti_platform_stubs()
 
-      other_user = lti_1p3_user_fixture()
+      other_user = lti_1p3_user()
 
       params = params
         |> Map.put("login_hint", "#{other_user.id}")
@@ -122,13 +122,13 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
   end
 
   def create_active_jwk(_context) do
-    {:ok, jwk} = provider!().create_jwk(jwk_fixture())
+    jwk = jwk_fixture()
 
     %{jwk: jwk}
   end
 
   def generate_lti_platform_stubs(args \\ %{}) do
-    user = args[:user] || lti_1p3_user_fixture()
+    user = args[:user] || lti_1p3_user()
     {:ok, %LoginHint{value: login_hint}} = LoginHints.create_login_hint(user.id)
     %{
       target_link_uri: target_link_uri,
@@ -157,8 +157,6 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
       redirect_uris: "some-valid-url"
     })
 
-    jwk = jwk_fixture()
-
     issuer = "some-issuer"
 
     params = %{
@@ -174,7 +172,7 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
       "state" => state,
     }
 
-    %{user: user, state: state, issuer: issuer, deployment_id: deployment_id, params: params, jwk: jwk, target_link_uri: target_link_uri, nonce: nonce, client_id: client_id, platform_instance: platform_instance}
+    %{user: user, state: state, issuer: issuer, deployment_id: deployment_id, params: params, target_link_uri: target_link_uri, nonce: nonce, client_id: client_id, platform_instance: platform_instance}
   end
 
 end

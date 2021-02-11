@@ -25,14 +25,12 @@ defmodule Lti_1p3.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto_sql, "~> 3.1"},
       {:excoveralls, "~> 0.10", only: :test},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},
       {:httpoison, "~> 1.6"},
       {:jason, "~> 1.0"},
       {:joken, "~> 2.2.0"},
       {:mox, "~> 0.5", only: :test},
-      {:postgrex, ">= 0.0.0"},
       {:timex, "~> 3.5"},
       {:uuid, "~> 1.1" },
     ]

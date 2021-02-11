@@ -33,8 +33,7 @@ defmodule Lti_1p3.Nonces do
     Logger.info("Cleaning up expired LTI 1.3 nonces...")
 
     nonce_ttl_sec = Lti_1p3.Config.get(:nonce_ttl_sec)
-    nonce_expiry = Timex.now |> Timex.subtract(Timex.Duration.from_seconds(nonce_ttl_sec))
-    provider!().delete_expired_nonces(nonce_expiry)
+    provider!().delete_expired_nonces(nonce_ttl_sec)
 
     Logger.info("Nonce cleanup complete.")
   end

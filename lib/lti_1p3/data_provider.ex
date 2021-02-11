@@ -2,11 +2,11 @@ defmodule Lti_1p3.DataProvider do
   alias Lti_1p3.Jwk
   alias Lti_1p3.Nonce
 
-  @callback get_active_jwk() :: {:ok, %Jwk{}} | {:error, Lti_1p3.DataProviderError.t()}
   @callback create_jwk(%Jwk{}) :: {:ok, %Jwk{}} | {:error, Lti_1p3.DataProviderError.t()}
-  @callback get_nonce(integer()) :: %Nonce{} | nil
+  @callback get_active_jwk() :: {:ok, %Jwk{}} | {:error, Lti_1p3.DataProviderError.t()}
   @callback create_nonce(%Nonce{}) :: {:ok, %Nonce{}} | {:error, Lti_1p3.DataProviderError.t()}
-  @callback delete_expired_nonces(DateTime.t()) :: any()
+  @callback get_nonce(String.t(), String.t() | nil) :: %Nonce{} | nil
+  @callback delete_expired_nonces(integer() | nil) :: any()
 end
 
 defmodule Lti_1p3.ToolDataProvider do
@@ -33,7 +33,7 @@ defmodule Lti_1p3.PlatformDataProvider do
   @callback get_platform_instance_by_client_id(String.t()) :: %PlatformInstance{} | nil
   @callback get_login_hint_by_value(String.t()) :: %LoginHint{} | nil
   @callback create_login_hint(%LoginHint{}) :: {:ok, %LoginHint{}} | {:error, Lti_1p3.DataProviderError.t()}
-  @callback delete_expired_login_hints(DateTime.t()) :: any()
+  @callback delete_expired_login_hints(integer() | nil) :: any()
 end
 
 defmodule Lti_1p3.DataProviderError do

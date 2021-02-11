@@ -20,16 +20,17 @@ defmodule Lti_1p3.Tool.ContextRolesTest do
       ]
     end
 
-    test "get_role returns a role with state: :loaded" do
-      role = ContextRoles.get_role(:context_administrator)
-
-      assert Ecto.get_meta(role, :state) == :loaded
-    end
-
-    test "get_role_by_uri returns a role with state: :loaded" do
-      role = ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator")
-
-      assert Ecto.get_meta(role, :state) == :loaded
+    test "get_role_by_uri returns the correct role" do
+      assert ContextRoles.list_roles() == [
+        ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator"),
+        ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#ContentDeveloper"),
+        ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"),
+        ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"),
+        ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Mentor"),
+        ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Manager"),
+        ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Member"),
+        ContextRoles.get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Officer"),
+      ]
     end
 
     test "get_role returns nil for invalid role atom" do

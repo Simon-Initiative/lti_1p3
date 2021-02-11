@@ -1,6 +1,5 @@
 defmodule Lti_1p3.Tool.AccessToken do
   import Lti_1p3.Config
-  import Ecto.Query, warn: false
 
   @enforce_keys [:access_token, :token_type, :expires_in, :scope]
   defstruct [:access_token, :token_type, :expires_in, :scope]

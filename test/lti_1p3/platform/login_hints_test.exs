@@ -1,9 +1,7 @@
 defmodule Lti_1p3.Platform.LoginHintsTest do
   use Lti_1p3.Test.TestCase
 
-  import Lti_1p3.DataProviders.EctoProvider.Config
-
-  alias Lti_1p3.DataProviders.EctoProvider
+  alias Lti_1p3.DataProviders.MemoryProvider
   alias Lti_1p3.Platform.LoginHints
 
   describe "lti 1.3 login_hints" do
@@ -36,11 +34,11 @@ defmodule Lti_1p3.Platform.LoginHintsTest do
 
       # fake the nonce was created a day + 1 hour ago
       a_day_before = Timex.now |> Timex.subtract(Timex.Duration.from_hours(25))
-      repo!().get(EctoProvider.LoginHint, login_hint.id)
-      |> Ecto.Changeset.cast(%{inserted_at: a_day_before}, [:inserted_at])
-      |> repo!().update!
+      Agent.update(MemoryProvider, fn state ->
+        %{state | login_hints: state.login_hints |> Map.put(login_hint.value, Map.put(login_hint, :inserted_at, a_day_before))}
+      end)
 
-      # cleanup
+      # run cleanup
       LoginHints.cleanup_login_hint_store()
 
       assert LoginHints.get_login_hint_by_value(login_hint.value) == nil
@@ -48,7 +46,7 @@ defmodule Lti_1p3.Platform.LoginHintsTest do
   end
 
   defp create_user(_context) do
-    user = lti_1p3_user_fixture()
+    user = lti_1p3_user()
 
     %{user: user}
   end
