@@ -59,10 +59,10 @@ defmodule Lti_1p3.MixProject do
   defp aliases do
     [
       # runs tests and produces a coverage report
-      "test.coverage": ["ecto.create --quiet", "ecto.migrate", "run priv/repo/seeds.exs", "coveralls.html"],
+      "test.coverage": ["coveralls.html"],
 
       # runs tests and produces a coverage report
-      "test.coverage.xml": ["ecto.create --quiet", "ecto.migrate", "run priv/repo/seeds.exs", "coveralls.xml"],
+      "test.coverage.xml": ["coveralls.xml"],
 
       # runs tests in deterministic order, only shows one failure at a time and reruns tests if any changes are made
       "test.watch": ["test.watch --stale --max-failures 1 --trace --seed 0"],
