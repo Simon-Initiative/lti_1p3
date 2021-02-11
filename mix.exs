@@ -55,10 +55,6 @@ defmodule Lti_1p3.MixProject do
   end
 
   # Aliases are shortcuts or tasks specific to the current project.
-  # For example, to create, migrate and run the seeds file at once:
-  #
-  #     $ mix ecto.setup
-  #
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
