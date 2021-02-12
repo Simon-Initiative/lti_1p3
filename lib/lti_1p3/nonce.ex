@@ -8,13 +8,4 @@ defmodule Lti_1p3.Nonce do
     domain: String.t(),
   }
 
-  def from(attrs) do
-    struct(Lti_1p3.Nonce, attrs)
-  end
-
-  def to_map(%Lti_1p3.Nonce{} = nonce) do
-    nonce
-    |> Map.from_struct()
-    |> Map.take(Lti_1p3.Nonce.__struct__() |> Map.keys())
-  end
 end

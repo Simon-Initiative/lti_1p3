@@ -107,7 +107,7 @@ defmodule Lti_1p3.Tool.LaunchValidation do
     # LTI 1.3 params are too big to store in the session cookie. Therefore, we must
     # cache all lti_params keyed off the sub value in database for use in other views
     cache_key = lti_params["sub"]
-    Lti_1p3.cache_lti_params(cache_key, lti_params)
+    Lti_1p3.Tool.LtiParams.cache_lti_params(cache_key, lti_params)
 
     {:ok, cache_key}
   end

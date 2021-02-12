@@ -9,13 +9,4 @@ defmodule Lti_1p3.Platform.LoginHint do
     context: String.t(),
   }
 
-  def from(attrs) do
-    struct(Lti_1p3.Platform.LoginHint, attrs)
-  end
-
-  def to_map(%Lti_1p3.Platform.LoginHint{} = login_hint) do
-    login_hint
-    |> Map.from_struct()
-    |> Map.take(Lti_1p3.Platform.LoginHint.__struct__() |> Map.keys())
-  end
 end

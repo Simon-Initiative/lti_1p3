@@ -11,13 +11,4 @@ defmodule Lti_1p3.Jwk do
     active: boolean()
   }
 
-  def from(attrs) do
-    struct(Lti_1p3.Jwk, attrs)
-  end
-
-  def to_map(%Lti_1p3.Jwk{} = jwk) do
-    jwk
-    |> Map.from_struct()
-    |> Map.take(Lti_1p3.Jwk.__struct__() |> Map.keys())
-  end
 end

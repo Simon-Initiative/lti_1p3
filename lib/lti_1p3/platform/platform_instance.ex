@@ -14,13 +14,4 @@ defmodule Lti_1p3.Platform.PlatformInstance do
     target_link_uri: String.t(),
   }
 
-  def from(attrs) do
-    struct(Lti_1p3.Platform.PlatformInstance, attrs)
-  end
-
-  def to_map(%Lti_1p3.Platform.PlatformInstance{} = platform_instance) do
-    platform_instance
-    |> Map.from_struct()
-    |> Map.take(Lti_1p3.Platform.PlatformInstance.__struct__() |> Map.keys())
-  end
 end

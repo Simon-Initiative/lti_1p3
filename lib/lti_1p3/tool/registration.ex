@@ -30,13 +30,4 @@ defmodule Lti_1p3.Tool.Registration do
     tool_jwk_id: integer()
   }
 
-  def from(attrs) do
-    struct(Lti_1p3.Tool.Registration, attrs)
-  end
-
-  def to_map(%Lti_1p3.Tool.Registration{} = registration) do
-    registration
-    |> Map.from_struct()
-    |> Map.take(Lti_1p3.Tool.Registration.__struct__() |> Map.keys())
-  end
 end
