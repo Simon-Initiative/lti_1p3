@@ -21,8 +21,8 @@ defmodule Lti_1p3.Nonces do
   ## Examples
       iex> create_nonce("value", "domain")
       {:ok, %Nonce{}}
-      iex> create_nonce("bad value", "domain")
-      {:error, %Ecto.Changeset{}}
+      iex> create_nonce("value", "domain")
+      {:error, %Lti_1p3.DataProviderError{}}
   """
   def create_nonce(value, domain \\ nil), do: provider!().create_nonce(%Nonce{value: value, domain: domain})
 

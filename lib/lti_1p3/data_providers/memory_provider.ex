@@ -218,20 +218,20 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
   end
 
   @impl ToolDataProvider
-  def get_lti_params_by_key(key) do
+  def get_lti_params_by_sub(sub) do
     Agent.get(__MODULE__, fn state ->
       state.lti_params
-      |> Map.get(key)
+      |> Map.get(sub)
     end)
   end
 
   @impl ToolDataProvider
-  def create_or_update_lti_params(%LtiParams{key: key} = lti_params) do
+  def create_or_update_lti_params(%LtiParams{sub: sub} = lti_params) do
     lti_params = lti_params
       |> Map.put(:id, get_next_index(:lti_params))
 
     Agent.update(__MODULE__, fn state ->
-      %{state | lti_params: state.lti_params |> Map.put(key, lti_params)}
+      %{state | lti_params: state.lti_params |> Map.put(sub, lti_params)}
     end)
 
     {:ok, lti_params}

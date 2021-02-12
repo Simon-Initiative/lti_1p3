@@ -105,11 +105,14 @@ defmodule Lti_1p3.Tool.LaunchValidation do
 
   defp cache_launch_params(lti_params) do
     # LTI 1.3 params are too big to store in the session cookie. Therefore, we must
-    # cache all lti_params keyed off the sub value in database for use in other views
-    cache_key = lti_params["sub"]
-    Lti_1p3.Tool.LtiParams.cache_lti_params(cache_key, lti_params)
+    # cache all lti_params keyed off the sub value for use in other views
+    sub = lti_params["sub"]
+    exp = Timex.from_unix(lti_params["exp"])
 
-    {:ok, cache_key}
+    %Lti_1p3.Tool.LtiParams{sub: sub, params: lti_params, exp: exp}
+    |> provider!().create_or_update_lti_params()
+
+    {:ok, sub}
   end
 
 end

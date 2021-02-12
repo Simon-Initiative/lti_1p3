@@ -21,7 +21,7 @@ defmodule Lti_1p3.ToolDataProvider do
   @callback get_jwk_by_registration(%Registration{}) :: {:ok, %Jwk{}} | {:error, Lti_1p3.DataProviderError.t()}
   @callback get_registration_by_issuer_client_id(String.t(), String.t()) :: %Registration{} | nil
   @callback get_deployment(%Registration{}, String.t()) :: %Deployment{} | nil
-  @callback get_lti_params_by_key(String.t()) :: %LtiParams{} | nil
+  @callback get_lti_params_by_sub(String.t()) :: %LtiParams{} | nil
   @callback create_or_update_lti_params(%LtiParams{}) :: {:ok, %LtiParams{}} | {:error, Lti_1p3.DataProviderError.t()}
 end
 

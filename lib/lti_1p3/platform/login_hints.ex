@@ -21,6 +21,8 @@ defmodule Lti_1p3.Platform.LoginHints do
   ## Examples
       iex> create_login_hint(session_user_id)
       {:ok, %LoginHint{}}
+      iex> create_login_hint(session_user_id)
+      {:error, %Lti_1p3.DataProviderError{}}
   """
   def create_login_hint(session_user_id, context \\ nil), do:
     provider!().create_login_hint(%LoginHint{value: UUID.uuid4(), session_user_id: session_user_id, context: context})
