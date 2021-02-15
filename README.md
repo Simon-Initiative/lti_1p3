@@ -275,7 +275,7 @@ Example of `post_redirect.html`, a self-submitting POST form with state and id_t
 
 ## Data Providers
 
-Data providers are implementations of the [DataProvider behavior](./lib/lti_1p3/data_provider.ex) which provide data persistance for the library. In most cases, the ephemeral MemoryProvider or persistent [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) will be sufficient.
+Data providers are implementations of the [DataProvider behavior](./lib/lti_1p3/data_provider.ex) which provide data persistance for the library. In most cases, the non-durable MemoryProvider or persistent [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) will be sufficient.
 
 ### Existing Data Providers
 
