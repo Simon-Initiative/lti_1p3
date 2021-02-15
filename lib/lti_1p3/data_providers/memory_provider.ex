@@ -148,12 +148,6 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
   ## ToolDataProviders ##
   @behaviour ToolDataProvider
 
-  @doc """
-    iex> create_registration(%Registration{})
-    {:ok, %Registration{}}
-    iex> create_registration(%Registration{})
-    {:error, Lti_1p3.DataProviderError.t()}
-  """
   @impl ToolDataProvider
   def create_registration(%Registration{issuer: issuer, client_id: client_id} = registration) do
     registration = registration

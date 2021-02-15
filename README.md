@@ -6,8 +6,7 @@ This library provides the capability to handle LTI 1.3 launch requests as a Tool
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `lti_1p3` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `lti_1p3` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -17,9 +16,7 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/lti_1p3](https://hexdocs.pm/lti_1p3).
+Documentation can be found at [https://hexdocs.pm/lti_1p3](https://hexdocs.pm/lti_1p3).
 
 ## Getting Started
 

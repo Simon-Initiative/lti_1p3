@@ -41,16 +41,26 @@ defmodule Lti_1p3.MixProject do
 
   defp description do
     """
-    Library for LTI 1.3 Platform and Tool integrations.
+    A library for LTI 1.3 Platform and Tool integrations
     """
   end
 
   defp package do
     [
+      organization: "simon_initiative",
+      links: %{
+        "Open Learning Initiative" => "https://oli.cmu.edu/",
+        "Github" => "https://github.com/Simon-Initiative/lti_1p3"
+      },
+      homepage_url: "https://oli.cmu.edu/",
       files: ["lib", "mix.exs", "README*", "LICENSE*"],
       maintainers: ["Eli Knebel"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/Simon-Initiative/lti_1p3"}
+      links: %{"GitHub" => "https://github.com/Simon-Initiative/lti_1p3"},
+      docs: [
+        main: "README.md", # The main page in the docs
+        extras: ["README.md"]
+      ]
     ]
   end
 
