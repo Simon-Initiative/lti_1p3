@@ -9,9 +9,13 @@ defmodule Lti_1p3.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      description: description(),
+      deps: deps(),
+
       package: package(),
-      deps: deps()
+      description: description(),
+
+      name: "Lti 1p3",
+      docs: docs()
     ]
   end
 
@@ -53,13 +57,22 @@ defmodule Lti_1p3.MixProject do
         "Github" => "https://github.com/Simon-Initiative/lti_1p3"
       },
       homepage_url: "https://oli.cmu.edu/",
-      files: ["lib", "mix.exs", "README*", "LICENSE*"],
-      maintainers: ["Eli Knebel"],
+      files: ["lib", "docs", "mix.exs", "README*", "LICENSE*"],
+      maintainers: ["Open Learning Initiative"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/Simon-Initiative/lti_1p3"},
-      docs: [
-        main: "README.md", # The main page in the docs
-        extras: ["README.md"]
+    ]
+  end
+
+  defp docs() do
+    [
+      main: "README",
+      extras: [
+        "README.md",
+        "docs/lti_1p3_overview.md",
+      ],
+      groups_for_extras: [
+        "LTI 1.3": Path.wildcard("docs/*.md"),
       ]
     ]
   end

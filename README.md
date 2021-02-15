@@ -1,8 +1,8 @@
-# Lti1p3
+# Lti 1p3
 
 An Elixir library for LTI 1.3 Platforms and Tools.
 
-This library provides the capability to handle LTI 1.3 launch requests as a Tool and also create launch requests as a Platform. You can use this library to develop an LTI 1.3 compliant Tool or Platform or both. The data persistence is plugable and can be set according to the [Data Providers](#data-providers) section below.
+This library implements the [Learning Tools Interoperability (LTI) 1.3 Specification](http://www.imsglobal.org/spec/lti/v1p3/) for Tool and Platform integrations in Elixir. You can use this library to develop an LTI 1.3 Tool or Platform (or both). The data persistence layer is "pluggable" and can be configured according to the [Data Providers](#data-providers) section below.
 
 ## Installation
 
@@ -35,7 +35,7 @@ config :lti_1p3,
 
 ```
 
-The provider configured here is the default in-memory persistence provider which means any registrations or deployments created will be lost when your app is stopped or restarted. To properly maintain data across restarts you will need to specify a persistent provider such as the [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) or implement a custom data provider using the DataProvider behavior. Refer to the [Data Providers](#data-providers) section below for more details.
+The provider configured here is the default in-memory persistence provider which means any registrations or deployments created will be lost when your app is stopped or restarted. To persist data across restarts you will need to specify a durable provider such as the [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) or implement a custom data provider using the DataProvider behavior. Refer to the [Data Providers](#data-providers) section below for more details.
 
 ### Jwk
 
