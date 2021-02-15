@@ -4,6 +4,7 @@ defmodule Lti_1p3.DataProvider do
 
   @callback create_jwk(%Jwk{}) :: {:ok, %Jwk{}} | {:error, Lti_1p3.DataProviderError.t()}
   @callback get_active_jwk() :: {:ok, %Jwk{}} | {:error, Lti_1p3.DataProviderError.t()}
+  @callback get_all_jwks() :: [%Jwk{}]
   @callback create_nonce(%Nonce{}) :: {:ok, %Nonce{}} | {:error, Lti_1p3.DataProviderError.t()}
   @callback get_nonce(String.t(), String.t() | nil) :: %Nonce{} | nil
   @callback delete_expired_nonces(integer() | nil) :: any()

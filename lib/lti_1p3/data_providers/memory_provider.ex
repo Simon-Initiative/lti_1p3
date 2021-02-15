@@ -77,6 +77,14 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
   end
 
   @impl DataProvider
+  def get_all_jwks() do
+    Agent.get(__MODULE__, fn state ->
+      state
+      |> Map.get(:jwks)
+    end)
+  end
+
+  @impl DataProvider
   def create_nonce(%Nonce{} = nonce) do
     nonce = nonce
       |> Map.from_struct()
