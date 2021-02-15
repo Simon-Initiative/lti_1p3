@@ -2,7 +2,7 @@
 
 An Elixir library for LTI 1.3 Platforms and Tools.
 
-This library provides the capability to handle LTI 1.3 launch requests as a Tool and also create launch requests as a Platform. You can use this library to develop an LTI 1.3 compliant Tool or Platform or both. The data persistence is customizable by specifying a provider that conforms to the [DataProvider](./lib/lti_1p3/data_provider.ex) behavior.
+This library provides the capability to handle LTI 1.3 launch requests as a Tool and also create launch requests as a Platform. You can use this library to develop an LTI 1.3 compliant Tool or Platform or both. The data persistence is plugable and can be set according to the [Data Providers](#data-providers) section below.
 
 ## Installation
 
@@ -38,7 +38,7 @@ config :lti_1p3,
 
 ```
 
-The provider configured here is an example in-memory persistence provider which means any registrations or deployments created will be lost when your app is stopped or restarted. To properly persist this data across restarts you will need to specify another provider such as the [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) or a custom implementation of the [DataProvider](./lib/lti_1p3/data_provider.ex) behavior.
+The provider configured here is the default in-memory persistence provider which means any registrations or deployments created will be lost when your app is stopped or restarted. To properly maintain data across restarts you will need to specify a persistent provider such as the [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) or implement a custom data provider using the DataProvider behavior. Refer to the [Data Providers](#data-providers) section below for more details.
 
 ### Jwk
 
@@ -275,7 +275,32 @@ Example of `post_redirect.html`, a self-submitting POST form with state and id_t
 
 ## Data Providers
 
-Data providers are implementations of the DataProvider behavior which provide data persistance for the library. In most cases, the default MemoryProvider or supplementary [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) will be sufficient. However, depending on your persistence setup, you may want to implement your own custom data provider. To use a certain data provider, simply specify which module your would like to use as your `provider` in `config.config.ex`.
+Data providers are implementations of the [DataProvider behavior](./lib/lti_1p3/data_provider.ex) which provide data persistance for the library. In most cases, the ephemeral MemoryProvider or persistent [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) will be sufficient.
+
+### Existing Data Providers
+
+| Name        | Module    | Description                 |
+| ------------|-----------|-----------------------------|
+| Memory Provider (Default) | `Lti_1p3.DataProviders.MemoryProvider` | An Elixir agent-based, non-durable in-memory store |
+| Ecto Provider | `Lti_1p3.DataProviders.EctoProvider` | An Ecto-based, persistent store (External Dependency: https://github.com/Simon-Initiative/lti_1p3_ecto_provider) |
+
+To use a specific data provider, simply install the provider dependency and set the module you would like to use as your `provider` in `config.config.ex`.
+
+```elixir
+use Mix.Config
+
+# ... existing config
+
+config :lti_1p3,
+  provider: Lti_1p3.DataProviders.EctoProvider
+
+# ... import_config
+```
+
+
+### Custom Data Provider
+
+Depending on your persistence setup, you may want to implement your own custom data provider using the [DataProvider behavior](./lib/lti_1p3/data_provider.ex) which can also be set in `config.config.ex`.
 
 ```elixir
 use Mix.Config
@@ -287,7 +312,6 @@ config :lti_1p3,
 
 # ... import_config
 ```
-
 ## Full LTI 1.3 Implementation Example
 
 This library was built for the purposes of supporting the Open Learning Initiative's next generation learning platform, [Torus](https://github.com/Simon-Initiative/oli-torus). For a complete implementation of all the concepts discussed here and usage of this library, take a look at the open source repository on Github, specifically [lti_controller.ex](https://github.com/Simon-Initiative/oli-torus/blob/master/lib/oli_web/controllers/lti_controller.ex).
