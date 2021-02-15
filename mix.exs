@@ -51,7 +51,6 @@ defmodule Lti_1p3.MixProject do
 
   defp package do
     [
-      organization: "simon_initiative",
       links: %{
         "Open Learning Initiative" => "https://oli.cmu.edu/",
         "Github" => "https://github.com/Simon-Initiative/lti_1p3"
@@ -66,7 +65,7 @@ defmodule Lti_1p3.MixProject do
 
   defp docs() do
     [
-      main: "README",
+      main: "readme",
       extras: [
         "README.md",
         "docs/lti_1p3_overview.md",
