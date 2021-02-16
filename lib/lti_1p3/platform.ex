@@ -2,7 +2,7 @@ defmodule Lti_1p3.Platform do
   import Lti_1p3.Config
 
   @doc """
-  Creates a new PlatformInstance.
+  Creates a new platform instance.
   ## Examples
       iex> create_platform_instance(platform_instance)
       {:ok, %Lti_1p3.Platform.PlatformInstance{}}

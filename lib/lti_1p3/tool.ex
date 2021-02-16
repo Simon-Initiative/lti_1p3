@@ -2,7 +2,7 @@ defmodule Lti_1p3.Tool do
   import Lti_1p3.Config
 
   @doc """
-  Creates a new Deployment.
+  Creates a new deployment.
   ## Examples
       iex> create_deployment(deployment)
       {:ok, %Lti_1p3.Tool.Deployment{}}
@@ -13,7 +13,7 @@ defmodule Lti_1p3.Tool do
     provider!().create_deployment(deployment)
 
   @doc """
-  Creates a new Registration.
+  Creates a new registration.
   ## Examples
       iex> registration(registration)
       {:ok, %Lti_1p3.Tool.Registration{}}
@@ -34,4 +34,14 @@ defmodule Lti_1p3.Tool do
   """
   def get_lti_params_by_sub(sub), do: provider!().get_lti_params_by_sub(sub)
 
+  @doc """
+  Gets the registration and deployment associated with the given issuer, client_id and deployment_id.
+  ## Examples
+      iex> get_registration_deployment(issuer, client_id, deployment_id)
+      {%Registration{}, %Deployment{}}
+      iex> get_rd_by_deployment_id(issuer, client_id, deployment_id)
+      {nil, nil}
+  """
+  def get_registration_deployment(issuer, client_id, deployment_id), do:
+    provider!().get_registration_deployment(issuer, client_id, deployment_id)
 end

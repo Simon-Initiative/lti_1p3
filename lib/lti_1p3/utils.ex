@@ -1,6 +1,10 @@
 defmodule Lti_1p3.Utils do
   import Lti_1p3.Config
 
+  def deployment_id_from_lti_params(lti_params) do
+    lti_params["https://purl.imsglobal.org/spec/lti/claim/deployment_id"]
+  end
+
   def registration_key_set_url(%{key_set_url: key_set_url}) do
     {:ok, key_set_url}
   end

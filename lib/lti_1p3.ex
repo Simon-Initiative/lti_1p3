@@ -1,8 +1,17 @@
 defmodule Lti_1p3 do
-  @moduledoc """
-
-  """
   import Lti_1p3.Config
+
+  alias Lti_1p3.Jwk
+
+  @doc """
+  Creates a new jwk.
+  ## Examples
+      iex> create_jwk(%Jwk{})
+      {:ok, %Jwk{}}
+      iex> create_jwk(%Jwk{})
+      {:error, %Lti_1p3.DataProviderError{}}
+  """
+  def create_jwk(%Jwk{} = jwk), do: provider!().create_jwk(jwk)
 
   @doc """
   Gets the currently active Jwk.
@@ -16,7 +25,7 @@ defmodule Lti_1p3 do
   def get_active_jwk(), do: provider!().get_active_jwk()
 
   @doc """
-  Gets a all public keys
+  Gets a all public keys.
   ## Examples
       iex> get_all_public_keys()
       %{keys: []}

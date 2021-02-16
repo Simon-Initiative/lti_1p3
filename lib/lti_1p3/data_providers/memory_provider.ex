@@ -173,22 +173,27 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
   end
 
   @impl ToolDataProvider
-  def get_rd_by_deployment_id(deployment_id) do
-    deployment = Agent.get(__MODULE__, fn state ->
-      state.deployments
-      |> Enum.find(fn d -> d.deployment_id == deployment_id end)
+  def get_registration_deployment(issuer, client_id, deployment_id) do
+    registration = Agent.get(__MODULE__, fn state ->
+      state.registrations
+      |> Enum.find(fn {_k, r} -> r.issuer == issuer && r.client_id == client_id end)
     end)
-    registration = case deployment do
-      nil ->
-        nil
-      deployment ->
-        Agent.get(__MODULE__, fn state ->
-          state.registrations
-          |> Enum.find(fn {_k, r} -> r.id == deployment.registration_id end)
-        end)
-    end
 
-    {registration, deployment}
+    case registration do
+      nil ->
+        {nil, nil}
+
+      registration ->
+        {registration,
+          Agent.get(__MODULE__, fn state ->
+            state.deployments
+            |> Enum.find(fn d ->
+              d.registration_id == registration.id
+              && d.deployment_id == deployment_id
+            end)
+          end)
+        }
+    end
   end
 
   @impl ToolDataProvider
