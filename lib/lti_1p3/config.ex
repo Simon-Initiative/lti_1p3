@@ -15,9 +15,7 @@ defmodule Lti_1p3.Config do
   # with the values in the second one having higher preference
   # than the first in case of conflicts.
   defp merge_configs(config1, config2) do
-    Keyword.merge(config1, config2, fn _, app1, app2 ->
-      Keyword.merge(app1, app2, &deep_merge/3)
-    end)
+    Keyword.merge(config1, config2, &deep_merge/3)
   end
 
   defp deep_merge(_key, value1, value2) do

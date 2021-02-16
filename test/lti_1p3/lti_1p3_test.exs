@@ -1,8 +1,6 @@
 defmodule Lti_1p3Test do
   use Lti_1p3.Test.TestCase
 
-  import Lti_1p3.Config
-
   alias Lti_1p3.Jwk
 
   describe "Lti_1p3" do
