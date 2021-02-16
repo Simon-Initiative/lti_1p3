@@ -10,8 +10,22 @@ defmodule Lti_1p3.Config do
 
   alias Lti_1p3.ConfigError
 
-  defp merge_configs(l_config, r_config) do
-    Keyword.merge(l_config, r_config)
+  # Merges two configurations.
+  # The configuration of each application is merged together
+  # with the values in the second one having higher preference
+  # than the first in case of conflicts.
+  defp merge_configs(config1, config2) do
+    Keyword.merge(config1, config2, fn _, app1, app2 ->
+      Keyword.merge(app1, app2, &deep_merge/3)
+    end)
+  end
+
+  defp deep_merge(_key, value1, value2) do
+    if Keyword.keyword?(value1) and Keyword.keyword?(value2) do
+      Keyword.merge(value1, value2, &deep_merge/3)
+    else
+      value2
+    end
   end
 
   @doc """
