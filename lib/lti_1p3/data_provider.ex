@@ -201,7 +201,6 @@ defmodule Lti_1p3.PlatformDataProvider do
 end
 
 defmodule Lti_1p3.DataProviderError do
-  @moduledoc false
   defstruct [:msg, :reason]
 
   @type error_reason() :: :unique_constraint_violation
