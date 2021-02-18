@@ -64,7 +64,7 @@ defmodule Lti_1p3.Tool.AccessToken do
   defp create_client_assertion(host, registration) do
 
     # Get the active private key
-    active_jwk = provider!().get_active_jwk()
+    {:ok, active_jwk} = provider!().get_active_jwk()
 
     # Sign and return the JWT, include the kid of the key we are using
     # in the header.
