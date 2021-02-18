@@ -1,4 +1,5 @@
 defmodule Lti_1p3.Utils do
+  @moduledoc false
   import Lti_1p3.Config
 
   def registration_key_set_url(%{key_set_url: key_set_url}) do

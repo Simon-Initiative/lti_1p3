@@ -183,13 +183,12 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
       nil ->
         {nil, nil}
 
-      registration ->
+      {_issuer, registration} ->
         {registration,
           Agent.get(__MODULE__, fn state ->
             state.deployments
             |> Enum.find(fn d ->
-              d.registration_id == registration.id
-              && d.deployment_id == deployment_id
+              d.registration_id == registration.id && d.deployment_id == deployment_id
             end)
           end)
         }

@@ -79,5 +79,27 @@ defmodule Lti_1p3.ToolTest do
       assert updated_fetched.params == updated_lti_params
     end
 
+    test "should get registration by issuer and client_id" do
+      jwk = jwk_fixture()
+      registration = registration_fixture(%{tool_jwk_id: jwk.id})
+
+      issuer = "https://lti-ri.imsglobal.org"
+      client_id = "12345"
+
+      assert Lti_1p3.Tool.get_registration_by_issuer_client_id(issuer, client_id) == registration
+    end
+
+    test "should get registration deployment by issuer, client_id and deployment_id" do
+      issuer = "https://lti-ri.imsglobal.org"
+      client_id = "12345"
+      deployment_id = "some-deployment-id"
+
+      jwk = jwk_fixture()
+      registration = registration_fixture(%{tool_jwk_id: jwk.id})
+      deployment = deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
+
+      assert Lti_1p3.Tool.get_registration_deployment(issuer, client_id, deployment_id) == {registration, deployment}
+    end
+
   end
 end

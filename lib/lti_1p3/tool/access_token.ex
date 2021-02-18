@@ -26,11 +26,10 @@ defmodule Lti_1p3.Tool.AccessToken do
   """
   def fetch_access_token(%Registration{} = registration, scopes, host) do
     client_assertion = create_client_assertion(host, registration)
-    issue_request(registration.auth_token_url, client_assertion, scopes)
+    request_token(registration.auth_token_url, client_assertion, scopes)
   end
 
-  defp issue_request(url, client_assertion, scopes) do
-
+  defp request_token(url, client_assertion, scopes) do
     body = [
       grant_type: "client_credentials",
       client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
@@ -62,7 +61,6 @@ defmodule Lti_1p3.Tool.AccessToken do
   end
 
   defp create_client_assertion(host, registration) do
-
     # Get the active private key
     {:ok, active_jwk} = provider!().get_active_jwk()
 
