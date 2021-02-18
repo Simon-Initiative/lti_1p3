@@ -272,7 +272,7 @@ Example of `post_redirect.html`, a self-submitting POST form with state and id_t
 
 ## Data Providers
 
-Data providers are implementations of the [DataProvider behavior](./lib/lti_1p3/data_provider.ex) which provide data persistance for the library. In most cases, the non-durable MemoryProvider or persistent [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) will be sufficient.
+Data providers are implementations of the `DataProvider` behavior which provide data persistance for the library. In most cases, the non-durable MemoryProvider or persistent [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) will be sufficient.
 
 ### Existing Data Providers
 
@@ -297,7 +297,7 @@ config :lti_1p3,
 
 ### Custom Data Provider
 
-Depending on your persistence setup, you may want to implement your own custom data provider using the [DataProvider behavior](./lib/lti_1p3/data_provider.ex) which can also be set in `config.config.ex`.
+Depending on your persistence setup, you may want to implement your own custom data provider using the `DataProvider` behavior which can also be set in `config/config.ex`.
 
 ```elixir
 use Mix.Config
