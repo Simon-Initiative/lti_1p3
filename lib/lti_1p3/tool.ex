@@ -39,9 +39,10 @@ defmodule Lti_1p3.Tool do
   ## Examples
       iex> get_registration_deployment(issuer, client_id, deployment_id)
       {%Registration{}, %Deployment{}}
-      iex> get_rd_by_deployment_id(issuer, client_id, deployment_id)
+      iex> get_registration_deployment(issuer, client_id, deployment_id)
       {nil, nil}
   """
   def get_registration_deployment(issuer, client_id, deployment_id), do:
     provider!().get_registration_deployment(issuer, client_id, deployment_id)
+
 end

@@ -1,6 +1,8 @@
 defmodule Lti_1p3.Tool.AccessToken do
   import Lti_1p3.Config
 
+  alias Lti_1p3.Tool.Registration
+
   @enforce_keys [:access_token, :token_type, :expires_in, :scope]
   defstruct [:access_token, :token_type, :expires_in, :scope]
 
@@ -18,28 +20,13 @@ defmodule Lti_1p3.Tool.AccessToken do
   otherwise.
 
   As parameters, expects:
-  1. The deployment id of the registration from which an access token is being requested
+  1. The registration from which an access token is being requested
   2. A list of scopes being requested
   3. The host name of this instance of Torus
   """
-  def fetch_access_token(nil, _, _), do: {:error, "bad deployment id"}
-
-  def fetch_access_token(deployment_id, scopes, host) do
-
-    Logger.debug("Fetching registration for deployment id #{deployment_id} and host '#{host}'")
-
-    case provider!().get_rd_by_deployment_id(deployment_id) do
-      nil ->
-        Logger.error("Registration for deployment id #{deployment_id} not found")
-        {:error, "unknown deployment id"}
-
-      {registration, _} ->
-
-        client_assertion = create_client_assertion(host, registration)
-        issue_request(registration.auth_token_url, client_assertion, scopes)
-
-    end
-
+  def fetch_access_token(%Registration{} = registration, scopes, host) do
+    client_assertion = create_client_assertion(host, registration)
+    issue_request(registration.auth_token_url, client_assertion, scopes)
   end
 
   defp issue_request(url, client_assertion, scopes) do
