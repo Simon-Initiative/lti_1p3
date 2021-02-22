@@ -1,4 +1,4 @@
-defmodule Lti_1p3.Test.Lti_1p3_User do
+defmodule Lti_1p3.Test.Lti_1p3_UserMock do
   @enforce_keys [:sub]
   defstruct [
     :id,
@@ -48,22 +48,21 @@ defmodule Lti_1p3.Test.Lti_1p3_User do
     phone_number: String.t(),
     phone_number_verified: boolean(),
     address: String.t(),
-    platform_roles: String.t(),
-    context_roles: String.t(),
+
+    platform_roles: [String.t()],
+    context_roles: [String.t()],
   }
 end
 
 # define implementations required for LTI 1.3 library integration
-defimpl Lti_1p3.Tool.Lti_1p3_User, for: Lti_1p3.Test.Lti_1p3_User do
-  def get_platform_roles(user) do
+defimpl Lti_1p3.Tool.Lti_1p3_User, for: Lti_1p3.Test.Lti_1p3_UserMock do
+  def get_platform_roles(user, _registration) do
     user.platform_roles
-    |> String.split(",")
     |> Lti_1p3.Tool.PlatformRoles.get_roles_by_uris()
   end
 
-  def get_context_roles(user, _context_id) do
+  def get_context_roles(user, _registration, _context_id) do
     user.context_roles
-    |> String.split(",")
     |> Lti_1p3.Tool.ContextRoles.get_roles_by_uris()
   end
 end

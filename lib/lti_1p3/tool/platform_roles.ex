@@ -215,27 +215,27 @@ defmodule Lti_1p3.Tool.PlatformRoles do
   @doc """
   Returns true if a user has a given role
   """
-  @spec has_role?(Lti_1p3_User.t(), PlatformRole.t()) :: boolean()
-  def has_role?(user, role) do
-    roles = Lti_1p3_User.get_platform_roles(user)
+  @spec has_role?(Lti_1p3_User.t(), Lti_1p3.Tool.Registration.t(), PlatformRole.t()) :: boolean()
+  def has_role?(user, registration, role) do
+    roles = Lti_1p3_User.get_platform_roles(user, registration)
     Enum.any?(roles, fn r -> r.uri == role.uri end)
   end
 
   @doc """
   Returns true if a user has any of the given roles
   """
-  @spec has_roles?(Lti_1p3_User.t(), [PlatformRole.t()], :any) :: boolean()
-  def has_roles?(user, roles, :any) when is_list(roles) do
-    user_roles = Lti_1p3_User.get_platform_roles(user)
+  @spec has_roles?(Lti_1p3_User.t(), Lti_1p3.Tool.Registration.t(), [PlatformRole.t()], :any) :: boolean()
+  def has_roles?(user, registration, roles, :any) when is_list(roles) do
+    user_roles = Lti_1p3_User.get_platform_roles(user, registration)
     user_roles_map = platform_roles_as_map(user_roles)
     Enum.any?(roles, fn r -> user_roles_map[r.uri] == true end)
   end
 
 
   # Returns true if a user has all of the given roles
-  @spec has_roles?(Lti_1p3_User.t(), [PlatformRole.t()], :all) :: boolean()
-  def has_roles?(user, roles, :all) when is_list(roles) do
-    user_roles = Lti_1p3_User.get_platform_roles(user)
+  @spec has_roles?(Lti_1p3_User.t(), Lti_1p3.Tool.Registration.t(), [PlatformRole.t()], :all) :: boolean()
+  def has_roles?(user, registration, roles, :all) when is_list(roles) do
+    user_roles = Lti_1p3_User.get_platform_roles(user, registration)
     user_roles_map = platform_roles_as_map(user_roles)
     Enum.all?(roles, fn r -> user_roles_map[r.uri] == true end)
   end

@@ -109,11 +109,12 @@ defmodule Lti_1p3.Tool.PlatformRolesTest do
     end
 
     test "has_role? returns true if a user has a given role" do
-      user = struct(Lti_1p3_User.Mock, %{
-        platform_role_uris: [
+      user = struct(Lti_1p3.Test.Lti_1p3_UserMock, %{
+        sub: "some-user-sub",
+        platform_roles: [
           "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner",
         ],
-        context_role_uris: [],
+        context_roles: [],
       })
 
       assert PlatformRoles.has_role?(user, PlatformRoles.get_role(:institution_instructor)) == false
@@ -121,11 +122,12 @@ defmodule Lti_1p3.Tool.PlatformRolesTest do
     end
 
     test "has_roles? with :any returns true if a user has any of the given roles" do
-      user = struct(Lti_1p3_User.Mock, %{
-        platform_role_uris: [
+      user = struct(Lti_1p3.Test.Lti_1p3_UserMock, %{
+        sub: "some-user-sub",
+        platform_roles: [
           "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner",
         ],
-        context_role_uris: [],
+        context_roles: [],
       })
 
       assert PlatformRoles.has_roles?(user, [PlatformRoles.get_role(:institution_instructor)], :any) == false
@@ -135,12 +137,13 @@ defmodule Lti_1p3.Tool.PlatformRolesTest do
     end
 
     test "has_roles? with :all returns true if a user has all of the given roles" do
-      user = struct(Lti_1p3_User.Mock, %{
-        platform_role_uris: [
+      user = struct(Lti_1p3.Test.Lti_1p3_UserMock, %{
+        sub: "some-user-sub",
+        platform_roles: [
           "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor",
           "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner",
         ],
-        context_role_uris: [],
+        context_roles: [],
       })
 
       assert PlatformRoles.has_roles?(user, [PlatformRoles.get_role(:institution_instructor)], :all) == true

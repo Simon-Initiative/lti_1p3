@@ -1,7 +1,6 @@
 defmodule Lti_1p3.Test.TestHelpers do
   import Lti_1p3.Config
 
-  alias Lti_1p3.Test.Lti_1p3_User
   alias Lti_1p3.Jwk
   alias Lti_1p3.Tool.Registration
   alias Lti_1p3.Tool.Deployment
@@ -197,25 +196,5 @@ defmodule Lti_1p3.Test.TestHelpers do
     })
 
     {:ok, %HTTPoison.Response{status_code: 200, body: body}}
-  end
-end
-
-# notice: this protocol mock implementation must reside in this support directory
-# because of protocol consolidation. See https://hexdocs.pm/elixir/master/Protocol.html#module-consolidation
-defmodule Lti_1p3.Tool.Lti_1p3_User.Mock do
-  alias Lti_1p3.Tool.Lti_1p3_User
-  alias Lti_1p3.Tool.PlatformRoles
-  alias Lti_1p3.Tool.ContextRoles
-
-  defstruct [:platform_role_uris, :context_role_uris]
-
-  defimpl Lti_1p3_User do
-    def get_platform_roles(mock_user) do
-      mock_user.platform_role_uris |> PlatformRoles.get_roles_by_uris()
-    end
-
-    def get_context_roles(mock_user, _context_id) do
-      mock_user.context_role_uris |> ContextRoles.get_roles_by_uris()
-    end
   end
 end
