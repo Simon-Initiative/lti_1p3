@@ -20,11 +20,16 @@ defmodule Lti_1p3.Test.TestHelpers do
         picture: "https://platform.example.edu/jane.jpg",
         email: "jane#{System.unique_integer([:positive])}@platform.example.edu",
         locale: "en-US",
-        platform_roles: "http://purl.imsglobal.org/vocab/lis/v2/system/person#User,http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student",
-        context_roles: "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner",
+        platform_roles: [
+          "http://purl.imsglobal.org/vocab/lis/v2/system/person#User",
+          "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student",
+        ],
+        context_roles: [
+          "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner",
+        ],
       })
 
-    struct!(Lti_1p3_User, params)
+    struct!(Lti_1p3.Test.Lti_1p3_UserMock, params)
   end
 
   def jwk_fixture(attrs \\ %{}) do

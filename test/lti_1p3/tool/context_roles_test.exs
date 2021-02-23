@@ -5,24 +5,7 @@ defmodule Lti_1p3.Tool.ContextRolesTest do
   alias Lti_1p3.Tool.ContextRoles
   alias Lti_1p3.Test.Lti_1p3_UserMock
 
-  defp create_fixtures(_context) do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{
-      issuer: "some issuer",
-      client_id: "some client_id",
-      key_set_url: "some key_set_url",
-      auth_token_url: "some auth_token_url",
-      auth_login_url: "some auth_login_url",
-      auth_server: "some auth_server",
-      tool_jwk_id: jwk.id,
-    })
-
-    %{jwk: jwk, registration: registration}
-  end
-
   describe "context roles" do
-    setup [:create_fixtures]
-
     test "list_roles returns an ordered list of all roles that match values returned by get_role with the corresponding atom" do
       assert ContextRoles.list_roles() == [
         ContextRoles.get_role(:context_administrator),
@@ -98,7 +81,7 @@ defmodule Lti_1p3.Tool.ContextRolesTest do
       assert ContextRoles.get_highest_role(roles) == nil
     end
 
-    test "has_role? returns true if a user has a given role", %{registration: registration} do
+    test "has_role? returns true if a user has a given role" do
       user = struct(Lti_1p3_UserMock, %{
         sub: "some-user-sub",
         platform_roles: [],
@@ -107,11 +90,11 @@ defmodule Lti_1p3.Tool.ContextRolesTest do
         ],
       })
 
-      assert ContextRoles.has_role?(user, registration, "context-id", ContextRoles.get_role(:context_instructor)) == false
-      assert ContextRoles.has_role?(user, registration, "context-id", ContextRoles.get_role(:context_learner)) == true
+      assert ContextRoles.has_role?(user, "some-test-context", ContextRoles.get_role(:context_instructor)) == false
+      assert ContextRoles.has_role?(user, "some-test-context", ContextRoles.get_role(:context_learner)) == true
     end
 
-    test "has_roles? with :any returns true if a user has any of the given roles", %{registration: registration} do
+    test "has_roles? with :any returns true if a user has any of the given roles" do
       user = struct(Lti_1p3_UserMock, %{
         sub: "some-user-sub",
         platform_roles: [],
@@ -120,13 +103,13 @@ defmodule Lti_1p3.Tool.ContextRolesTest do
         ],
       })
 
-      assert ContextRoles.has_roles?(user, registration, "context-id", [ContextRoles.get_role(:context_instructor)], :any) == false
-      assert ContextRoles.has_roles?(user, registration, "context-id", [ContextRoles.get_role(:context_instructor), ContextRoles.get_role(:context_learner)], :any) == true
-      assert ContextRoles.has_roles?(user, registration, "context-id", [ContextRoles.get_role(:context_learner)], :any) == true
-      assert ContextRoles.has_roles?(user, registration, "context-id", [], :any) == false
+      assert ContextRoles.has_roles?(user, "some-test-context", [ContextRoles.get_role(:context_instructor)], :any) == false
+      assert ContextRoles.has_roles?(user, "some-test-context", [ContextRoles.get_role(:context_instructor), ContextRoles.get_role(:context_learner)], :any) == true
+      assert ContextRoles.has_roles?(user, "some-test-context", [ContextRoles.get_role(:context_learner)], :any) == true
+      assert ContextRoles.has_roles?(user, "some-test-context", [], :any) == false
     end
 
-    test "has_roles? with :all returns true if a user has all of the given roles", %{registration: registration} do
+    test "has_roles? with :all returns true if a user has all of the given roles" do
       user = struct(Lti_1p3_UserMock, %{
         sub: "some-user-sub",
         platform_roles: [],
@@ -136,10 +119,10 @@ defmodule Lti_1p3.Tool.ContextRolesTest do
         ],
       })
 
-      assert ContextRoles.has_roles?(user, registration, "context-id", [ContextRoles.get_role(:context_instructor)], :all) == true
-      assert ContextRoles.has_roles?(user, registration, "context-id", [ContextRoles.get_role(:context_instructor), ContextRoles.get_role(:context_learner)], :all) == true
-      assert ContextRoles.has_roles?(user, registration, "context-id", [ContextRoles.get_role(:context_learner), ContextRoles.get_role(:context_mentor)], :all) == false
-      assert ContextRoles.has_roles?(user, registration, "context-id", [], :all) == true
+      assert ContextRoles.has_roles?(user, "some-test-context", [ContextRoles.get_role(:context_instructor)], :all) == true
+      assert ContextRoles.has_roles?(user, "some-test-context", [ContextRoles.get_role(:context_instructor), ContextRoles.get_role(:context_learner)], :all) == true
+      assert ContextRoles.has_roles?(user, "some-test-context", [ContextRoles.get_role(:context_learner), ContextRoles.get_role(:context_mentor)], :all) == false
+      assert ContextRoles.has_roles?(user, "some-test-context", [], :all) == true
     end
   end
 end

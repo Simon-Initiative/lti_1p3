@@ -3,7 +3,7 @@ defmodule Lti_1p3.Tool.PlatformRolesTest do
   use Lti_1p3.Test.TestCase
 
   alias Lti_1p3.Tool.PlatformRoles
-  alias Lti_1p3.Tool.Lti_1p3_User
+  alias Lti_1p3.Test.Lti_1p3_UserMock
 
   describe "platform roles" do
 
@@ -109,7 +109,7 @@ defmodule Lti_1p3.Tool.PlatformRolesTest do
     end
 
     test "has_role? returns true if a user has a given role" do
-      user = struct(Lti_1p3.Test.Lti_1p3_UserMock, %{
+      user = struct(Lti_1p3_UserMock, %{
         sub: "some-user-sub",
         platform_roles: [
           "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner",
@@ -122,7 +122,7 @@ defmodule Lti_1p3.Tool.PlatformRolesTest do
     end
 
     test "has_roles? with :any returns true if a user has any of the given roles" do
-      user = struct(Lti_1p3.Test.Lti_1p3_UserMock, %{
+      user = struct(Lti_1p3_UserMock, %{
         sub: "some-user-sub",
         platform_roles: [
           "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner",
@@ -137,7 +137,7 @@ defmodule Lti_1p3.Tool.PlatformRolesTest do
     end
 
     test "has_roles? with :all returns true if a user has all of the given roles" do
-      user = struct(Lti_1p3.Test.Lti_1p3_UserMock, %{
+      user = struct(Lti_1p3_UserMock, %{
         sub: "some-user-sub",
         platform_roles: [
           "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor",

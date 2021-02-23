@@ -113,26 +113,26 @@ defmodule Lti_1p3.Tool.ContextRoles do
   @doc """
   Returns true if a user has a given role
   """
-  @spec has_role?(Lti_1p3_User.t(), Lti_1p3.Tool.Registration.t(), String.t(), ContextRole.t()) :: boolean()
-  def has_role?(user, registration, context_id, role) when is_struct(user) do
-    roles = Lti_1p3_User.get_context_roles(user, registration, context_id)
+  @spec has_role?(Lti_1p3_User.t(), any(), ContextRole.t()) :: boolean()
+  def has_role?(user, context, role) when is_struct(user) do
+    roles = Lti_1p3_User.get_context_roles(user, context)
     Enum.any?(roles, fn r -> r.uri == role.uri end)
   end
 
   @doc """
   Returns true if a user has any of the given roles
   """
-  @spec has_roles?(Lti_1p3_User.t(), Lti_1p3.Tool.Registration.t(), String.t(), [ContextRole.t()], :any) :: boolean()
-  def has_roles?(user, registration, context_id, roles, :any) when is_struct(user) and is_list(roles) do
-    context_roles = Lti_1p3_User.get_context_roles(user, registration, context_id)
+  @spec has_roles?(Lti_1p3_User.t(), any(), [ContextRole.t()], :any) :: boolean()
+  def has_roles?(user, context, roles, :any) when is_struct(user) and is_list(roles) do
+    context_roles = Lti_1p3_User.get_context_roles(user, context)
     context_roles_map = context_roles_as_map(context_roles)
     Enum.any?(roles, fn r -> context_roles_map[r.uri] == true end)
   end
 
   # Returns true if a user has all of the given roles
-  @spec has_roles?(Lti_1p3_User.t(), Lti_1p3.Tool.Registration.t(), String.t(), [ContextRole.t()], :all) :: boolean()
-  def has_roles?(user, registration, context_id, roles, :all) when is_struct(user) and is_list(roles) do
-    context_roles = Lti_1p3_User.get_context_roles(user, registration, context_id)
+  @spec has_roles?(Lti_1p3_User.t(), any(), [ContextRole.t()], :all) :: boolean()
+  def has_roles?(user, context, roles, :all) when is_struct(user) and is_list(roles) do
+    context_roles = Lti_1p3_User.get_context_roles(user, context)
     context_roles_map = context_roles_as_map(context_roles)
     Enum.all?(roles, fn r -> context_roles_map[r.uri] == true end)
   end

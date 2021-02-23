@@ -56,13 +56,17 @@ end
 
 # define implementations required for LTI 1.3 library integration
 defimpl Lti_1p3.Tool.Lti_1p3_User, for: Lti_1p3.Test.Lti_1p3_UserMock do
-  def get_platform_roles(user, _registration) do
+  def get_platform_roles(user) do
     user.platform_roles
     |> Lti_1p3.Tool.PlatformRoles.get_roles_by_uris()
   end
 
-  def get_context_roles(user, _registration, _context_id) do
-    user.context_roles
-    |> Lti_1p3.Tool.ContextRoles.get_roles_by_uris()
+  def get_context_roles(user, context) do
+    if context == "some-test-context" do
+      user.context_roles
+      |> Lti_1p3.Tool.ContextRoles.get_roles_by_uris()
+    else
+      []
+    end
   end
 end
