@@ -115,7 +115,7 @@ defmodule Lti_1p3.Tool.LaunchValidation do
     cache_key = generate_cache_key(issuer, client_id, user_sub, context_id)
 
     exp = Timex.from_unix(lti_params["exp"])
-    provider!().create_or_update_lti_params(cache_key, %Lti_1p3.Tool.LtiParams{key: cache_key, params: lti_params, exp: exp})
+    provider!().create_or_update_lti_params(%Lti_1p3.Tool.LtiParams{key: cache_key, params: lti_params, exp: exp})
 
     {:ok, cache_key}
   end

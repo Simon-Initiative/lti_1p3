@@ -137,14 +137,14 @@ defmodule Lti_1p3.ToolDataProvider do
   @callback get_lti_params_by_key(String.t()) :: %LtiParams{} | nil
 
   @doc """
-  Creates or updates the LTI params for a user, keying off the 'key' parameter.
+  Creates or updates the LTI params for a user, keying off the 'key' value.
   ## Examples
       iex> create_or_update_lti_params(%LtiParams{})
       {:ok, %LtiParams{}}
       iex> create_or_update_lti_params(%LtiParams{})
       {:error, %Lti_1p3.DataProviderError{}}
   """
-  @callback create_or_update_lti_params(String.t(), %LtiParams{}) :: {:ok, %LtiParams{}} | {:error, DataProviderError.t()}
+  @callback create_or_update_lti_params(%LtiParams{}) :: {:ok, %LtiParams{}} | {:error, DataProviderError.t()}
 end
 
 defmodule Lti_1p3.PlatformDataProvider do

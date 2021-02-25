@@ -9,6 +9,7 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
   alias Lti_1p3.Nonce
   alias Lti_1p3.Tool.Registration
   alias Lti_1p3.Tool.Deployment
+  alias Lti_1p3.Tool.LtiParams
   alias Lti_1p3.Platform.PlatformInstance
   alias Lti_1p3.Platform.LoginHint
 
@@ -231,7 +232,7 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
   end
 
   @impl ToolDataProvider
-  def create_or_update_lti_params(key, lti_params) do
+  def create_or_update_lti_params(%LtiParams{key: key} = lti_params) do
     lti_params = lti_params
       |> Map.put(:id, get_next_index(:lti_params))
 

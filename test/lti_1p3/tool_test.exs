@@ -46,7 +46,7 @@ defmodule Lti_1p3.ToolTest do
       cache_key = Lti_1p3.Tool.lti_params_key(issuer, client_id, user_sub, context_id)
       exp = Timex.from_unix(lti_params["exp"])
 
-      {:ok, %Lti_1p3.Tool.LtiParams{}} = provider!().create_or_update_lti_params(cache_key,
+      {:ok, %Lti_1p3.Tool.LtiParams{}} = provider!().create_or_update_lti_params(
         %Lti_1p3.Tool.LtiParams{key: cache_key, params: lti_params, exp: exp})
 
       fetched = Lti_1p3.Tool.get_lti_params_by_key(cache_key)
@@ -63,7 +63,7 @@ defmodule Lti_1p3.ToolTest do
       cache_key = Lti_1p3.Tool.lti_params_key(issuer, client_id, user_sub, context_id)
       exp = Timex.from_unix(lti_params["exp"])
 
-      {:ok, %Lti_1p3.Tool.LtiParams{}} = provider!().create_or_update_lti_params(cache_key,
+      {:ok, %Lti_1p3.Tool.LtiParams{}} = provider!().create_or_update_lti_params(
         %Lti_1p3.Tool.LtiParams{key: cache_key, params: lti_params, exp: exp})
 
       fetched = Lti_1p3.Tool.get_lti_params_by_key(cache_key)
@@ -84,7 +84,7 @@ defmodule Lti_1p3.ToolTest do
       updated_context_id = updated_lti_params["https://purl.imsglobal.org/spec/lti/claim/context"]["id"]
       updated_cache_key = Lti_1p3.Tool.lti_params_key(updated_issuer, updated_client_id, updated_user_sub, updated_context_id)
 
-      {:ok, %Lti_1p3.Tool.LtiParams{}} = provider!().create_or_update_lti_params(updated_cache_key,
+      {:ok, %Lti_1p3.Tool.LtiParams{}} = provider!().create_or_update_lti_params(
         %Lti_1p3.Tool.LtiParams{key: updated_cache_key, params: updated_lti_params, exp: exp})
 
       updated_fetched = Lti_1p3.Tool.get_lti_params_by_key(updated_cache_key)
