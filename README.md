@@ -182,7 +182,10 @@ defmodule MyAppWeb.LtiController do
 end
 ```
 
-If successful, `validate` returns the LTI params from the request as well as the `sub` for a user, which can be used to retrieve the the LTI params associated with the user's latest launch by using the `Lti_1p3.Tool` module.
+If successful, `validate` returns the LTI params from the request as well as a `key` for the cached lti params, which can be used to retrieve the the LTI params associated with the user's latest launch by using the `Lti_1p3.Tool` module. This key is guaranteed to be unique to the platform, user, and context_id and reproducible given the same values. This means when a different set of LTI params for the same platform, user, and context_id are received, the generated key will be identical and the corresponding cached params will be updated to the new values.
+
+Note, this example of storing the `lti_1p3_key` assumes only a single platform will use the tool. If you expect more that one platform to use your tool
+concurrently, you may want to build out a more rich structure of storing these lti param keys in the session, such as including the full universal scope consisting of a platform identifier, user identifier and context identifier all in the session to guarantee the correct lti params can be loaded for a particular platform, user, and context.
 
 ```elixir
 %Lti_1p3.Tool.LtiParams{params: lti_params} = Lti_1p3.Tool.get_lti_params_by_sub(sub)
