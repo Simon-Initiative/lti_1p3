@@ -1,5 +1,10 @@
 # Lti 1p3
 
+![Hex.pm](https://img.shields.io/hexpm/v/lti_1p3)
+![GitHub](https://img.shields.io/github/license/Simon-Initiative/lti_1p3?color=blue)
+[![Build & Test](https://github.com/Simon-Initiative/lti_1p3/actions/workflows/main.yml/badge.svg)](https://github.com/Simon-Initiative/lti_1p3/actions/workflows/main.yml)
+![Coveralls](https://img.shields.io/coveralls/github/Simon-Initiative/lti_1p3)
+
 An Elixir library for LTI 1.3 Platforms and Tools.
 
 This library implements the [Learning Tools Interoperability (LTI) 1.3 Specification](http://www.imsglobal.org/spec/lti/v1p3/) for Tool and Platform integrations in Elixir. You can use this library to develop an LTI 1.3 Tool or Platform (or both). The data persistence layer is "pluggable" and can be configured according to the [Data Providers](#data-providers) section below.
