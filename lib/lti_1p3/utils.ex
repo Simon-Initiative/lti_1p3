@@ -134,4 +134,11 @@ defmodule Lti_1p3.Utils do
     end
   end
 
+  def generate_cache_key(issuer, client_id, user_sub, context_id) do
+    # it doesn't matter that the sha256 key is hard coded here since it does not need
+    # to be secret, we only need the hashing mechanism to guarantee
+    # a given set of parameters always generates the same hash for a concise key
+    :crypto.hmac(:sha256, "generate_cache_key", "#{issuer}#{client_id}#{user_sub}#{context_id}")
+    |> Base.encode16()
+  end
 end

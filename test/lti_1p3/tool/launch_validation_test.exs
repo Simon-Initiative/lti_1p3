@@ -26,7 +26,13 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
       |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
 
       assert {:ok, lti_params, cache_key} = LaunchValidation.validate(params, session_state)
-      assert lti_params["sub"] == cache_key
+
+      issuer = lti_params["iss"]
+      client_id = lti_params["aud"]
+      user_sub = lti_params["sub"]
+      context_id = lti_params["https://purl.imsglobal.org/spec/lti/claim/context"]["id"]
+
+      assert cache_key == Lti_1p3.Utils.generate_cache_key(issuer, client_id, user_sub, context_id)
     end
   end
 

@@ -1,10 +1,10 @@
 defmodule Lti_1p3.Tool.LtiParams do
-  @enforce_keys [:sub, :params, :exp]
-  defstruct [:id, :sub, :params, :exp]
+  @enforce_keys [:key, :params, :exp]
+  defstruct [:id, :key, :params, :exp]
 
   @type t() :: %__MODULE__{
     id: integer(),
-    sub: String.t(),
+    key: String.t(),
     params: map(),
     exp: DateTime.t()
   }

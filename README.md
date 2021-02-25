@@ -154,10 +154,10 @@ defmodule MyAppWeb.LtiController do
   def launch(conn, params) do
     session_state = Plug.Conn.get_session(conn, "state")
     case Lti_1p3.Tool.LaunchValidation.validate(params, session_state) do
-      {:ok, lti_params, sub} ->
-        # store sub in the session so that the cached lti_params can be retrieved in later requests
+      {:ok, lti_params, key} ->
+        # store key in the session so that the cached lti_params can be retrieved in later requests
         conn = conn
-          |> Plug.Conn.put_session(:lti_1p3_sub, sub)
+          |> Plug.Conn.put_session(:lti_1p3_key, key)
 
         handle_valid_lti_1p3_launch(conn, lti_params)
 

@@ -15,24 +15,38 @@ defmodule Lti_1p3.Tool do
   @doc """
   Creates a new registration.
   ## Examples
-      iex> registration(registration)
+      iex> create_registration(registration)
       {:ok, %Lti_1p3.Tool.Registration{}}
-      iex> registration(registration)
+      iex> create_registration(registration)
       {:error, %Lti_1p3.DataProviderError{}}
   """
   def create_registration(%Lti_1p3.Tool.Registration{} = registration), do:
     provider!().create_registration(registration)
 
   @doc """
-  Gets a user's cached lti_params from the given sub.
+  Gets a user's cached lti_params from the given key.
   Returns `nil` if the lti_params do not exist.
   ## Examples
-      iex> Lti_1p3.get_lti_params_by_sub("some-sub")
+      iex> get_lti_params_by_key("some-key")
       %Lti_1p3.Tool.LtiParams{}
-      iex> Lti_1p3.get_lti_params_by_sub("unknown-sub")
+      iex> get_lti_params_by_key("unknown-key")
       nil
   """
-  def get_lti_params_by_sub(sub), do: provider!().get_lti_params_by_sub(sub)
+  def get_lti_params_by_key(key), do: provider!().get_lti_params_by_key(key)
+
+  @doc """
+  Generates a cache key by using the hash of the provided parameters. The more
+  parameters provided, the more specific the key can be. For example, to only generate
+  a key for details that pertain to a platform, only provide an issuer and client_id. To
+  generate a key for a specific platform user's context, provide all parameters.
+  ## Examples
+      iex> lti_params_key("some-key")
+      %Lti_1p3.Tool.LtiParams{}
+      iex> lti_params_key("unknown-key")
+      nil
+  """
+  def lti_params_key(issuer, client_id, user_sub \\ "", context_id \\ ""), do:
+    Lti_1p3.Utils.generate_cache_key(issuer, client_id, user_sub, context_id)
 
   @doc """
   Gets the registration with the given issuer and client_id.
