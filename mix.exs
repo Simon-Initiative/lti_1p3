@@ -7,9 +7,11 @@ defmodule Lti_1p3.MixProject do
       version: "0.3.0",
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
+      elixirc_options: elixirc_options(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      test_coverage: [tool: ExCoveralls],
 
       package: package(),
       description: description(),
@@ -42,6 +44,10 @@ defmodule Lti_1p3.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp elixirc_options(:dev), do: []
+  defp elixirc_options(:test), do: []
+  defp elixirc_options(_), do: [warnings_as_errors: true]
 
   defp description do
     """
