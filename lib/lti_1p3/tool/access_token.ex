@@ -1,8 +1,6 @@
 defmodule Lti_1p3.Tool.AccessToken do
   import Lti_1p3.Config
 
-  alias Lti_1p3.Tool.Registration
-
   @enforce_keys [:access_token, :token_type, :expires_in, :scope]
   defstruct [:access_token, :token_type, :expires_in, :scope]
 
@@ -24,9 +22,9 @@ defmodule Lti_1p3.Tool.AccessToken do
   2. A list of scopes being requested
   3. The host name of this instance of Torus
   """
-  def fetch_access_token(%Registration{} = registration, scopes, host) do
-    client_assertion = create_client_assertion(host, registration)
-    request_token(registration.auth_token_url, client_assertion, scopes)
+  def fetch_access_token(%{auth_token_url: auth_token_url, client_id: client_id}, scopes, host) do
+    client_assertion = create_client_assertion(host, %{auth_token_url: auth_token_url, client_id: client_id})
+    request_token(auth_token_url, client_assertion, scopes)
   end
 
   defp request_token(url, client_assertion, scopes) do
@@ -60,7 +58,7 @@ defmodule Lti_1p3.Tool.AccessToken do
 
   end
 
-  defp create_client_assertion(host, registration) do
+  defp create_client_assertion(host, %{auth_token_url: auth_token_url, client_id: client_id}) do
     # Get the active private key
     {:ok, active_jwk} = provider!().get_active_jwk()
 
@@ -72,8 +70,8 @@ defmodule Lti_1p3.Tool.AccessToken do
     # define our custom claims
     custom_claims = %{
       "iss" => host,
-      "aud" => registration.auth_token_url,
-      "sub" => registration.client_id
+      "aud" => auth_token_url,
+      "sub" => client_id
     }
     {:ok, token, _} = Lti_1p3.JokenConfig.generate_and_sign(custom_claims, signer)
 
