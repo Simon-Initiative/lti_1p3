@@ -4,8 +4,8 @@ defmodule Lti_1p3.MixProject do
   def project do
     [
       app: :lti_1p3,
-      version: "0.3.1",
-      elixir: "~> 1.11",
+      version: "0.3.2",
+      elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       elixirc_options: elixirc_options(Mix.env()),
       start_permanent: Mix.env() == :prod,
