@@ -2,7 +2,7 @@
 
 [![Hex.pm](https://img.shields.io/hexpm/v/lti_1p3)](https://hex.pm/packages/lti_1p3)
 [![GitHub](https://img.shields.io/github/license/Simon-Initiative/lti_1p3?color=blue)](https://github.com/Simon-Initiative/lti_1p3/blob/master/LICENSE)
-[![Build & Test](https://github.com/Simon-Initiative/lti_1p3/actions/workflows/main.yml/badge.svg)](https://github.com/Simon-Initiative/lti_1p3/actions/workflows/main.yml)
+[![Build & Test](https://github.com/Simon-Initiative/lti_1p3/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/Simon-Initiative/lti_1p3/actions/workflows/main.yml)
 [![Coverage Status](https://coveralls.io/repos/github/Simon-Initiative/lti_1p3/badge.svg?branch=master)](https://coveralls.io/github/Simon-Initiative/lti_1p3?branch=master)
 
 An Elixir library for LTI 1.3 Platforms and Tools.
