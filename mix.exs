@@ -4,7 +4,7 @@ defmodule Lti_1p3.MixProject do
   def project do
     [
       app: :lti_1p3,
-      version: "0.3.2",
+      version: "0.3.3",
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       elixirc_options: elixirc_options(Mix.env()),
@@ -12,10 +12,8 @@ defmodule Lti_1p3.MixProject do
       aliases: aliases(),
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
-
       package: package(),
       description: description(),
-
       name: "Lti 1p3",
       docs: docs()
     ]
@@ -38,7 +36,7 @@ defmodule Lti_1p3.MixProject do
       {:joken, "~> 2.2.0"},
       {:mox, "~> 0.5", only: :test},
       {:timex, "~> 3.5"},
-      {:uuid, "~> 1.1" },
+      {:uuid, "~> 1.1"}
     ]
   end
 
@@ -65,7 +63,7 @@ defmodule Lti_1p3.MixProject do
       files: ["lib", "docs", "mix.exs", "README*", "LICENSE*"],
       maintainers: ["Open Learning Initiative"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/Simon-Initiative/lti_1p3"},
+      links: %{"GitHub" => "https://github.com/Simon-Initiative/lti_1p3"}
     ]
   end
 
@@ -74,10 +72,10 @@ defmodule Lti_1p3.MixProject do
       main: "readme",
       extras: [
         "README.md",
-        "docs/lti_1p3_overview.md",
+        "docs/lti_1p3_overview.md"
       ],
       groups_for_extras: [
-        "LTI 1.3": Path.wildcard("docs/*.md"),
+        "LTI 1.3": Path.wildcard("docs/*.md")
       ]
     ]
   end
@@ -93,7 +91,7 @@ defmodule Lti_1p3.MixProject do
       "test.coverage.xml": ["coveralls.xml"],
 
       # runs tests in deterministic order, only shows one failure at a time and reruns tests if any changes are made
-      "test.watch": ["test.watch --stale --max-failures 1 --trace --seed 0"],
+      "test.watch": ["test.watch --stale --max-failures 1 --trace --seed 0"]
     ]
   end
 end
