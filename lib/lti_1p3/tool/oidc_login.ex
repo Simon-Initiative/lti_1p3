@@ -62,6 +62,7 @@ defmodule Lti_1p3.Tool.OidcLogin do
   defp validate_registration(params) do
     issuer = params["iss"]
     client_id = params["client_id"]
+    lti_deployment_id = params["lti_deployment_id"]
 
     case provider!().get_registration_by_issuer_client_id(issuer, client_id) do
       nil ->
@@ -70,6 +71,7 @@ defmodule Lti_1p3.Tool.OidcLogin do
           msg: "Registration with issuer \"#{issuer}\" and client id \"#{client_id}\" not found",
           issuer: issuer,
           client_id: client_id,
+          lti_deployment_id: lti_deployment_id
         }}
       registration ->
         {:ok, registration}
