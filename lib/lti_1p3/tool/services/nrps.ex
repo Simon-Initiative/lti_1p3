@@ -1,6 +1,6 @@
 defmodule Lti_1p3.Tool.Services.NRPS do
   @moduledoc """
-  Implementation of LTI Names and Roles Provisioning Service
+  Implementation of LTI Names and Roles Provisioning Service (NRPS) version 2.0.
 
   For information on the standard, see:
   https://www.imsglobal.org/spec/lti-nrps/v2p0

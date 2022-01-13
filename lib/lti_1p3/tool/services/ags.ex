@@ -1,6 +1,6 @@
 defmodule Lti_1p3.Tool.Services.AGS do
   @moduledoc """
-  Implementation of LTI Assignment and Grading Services (LTI AGS) version 2.0.
+  Implementation of LTI Assignment and Grading Services (AGS) version 2.0.
 
   For information on the standard, see:
   https://www.imsglobal.org/spec/lti-ags/v2p0/
@@ -55,10 +55,10 @@ defmodule Lti_1p3.Tool.Services.AGS do
       ) do
     Logger.debug("Fetch or create line item for #{resource_id} #{label}")
 
-    # Grade passback 2.0 lineitems endpoint allows a GET request with a query
-    # param filter.  We use that to request only the lineitem that corresponds
-    # to this particular resource_id.  "resource_id", from grade passback 2.0
-    # perspective is simply an identifier that the tool uses for a lineitem and its use
+    # Grade pass back 2.0 line items endpoint allows a GET request with a query
+    # param filter.  We use that to request only the line item that corresponds
+    # to this particular resource_id.  "resource_id", from grade pass back 2.0
+    # perspective is simply an identifier that the tool uses for a line item and its use
     # here as a Torus "resource_id" is strictly coincidence.
 
     prefixed_resource_id = LineItem.to_resource_id(resource_id)
@@ -128,7 +128,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
   end
 
   @doc """
-  Creates a line item for a resource id. Tthis function returns a line item struct wrapped
+  Creates a line item for a resource id. This function returns a line item struct wrapped
   in a {:ok, line_item} tuple.  On error, returns a {:error, error} tuple.
   """
   def create_line_item(
@@ -197,9 +197,9 @@ defmodule Lti_1p3.Tool.Services.AGS do
   end
 
   @doc """
-  Returns true if grade passback service is enabled with the necessary scopes. The
-  necessary scopes are the lineitem scope to read all lineitems and create new ones
-  and the scores scope, to be able to post new scores. Also verifies that the lineitems
+  Returns true if grade pass back service is enabled with the necessary scopes. The
+  necessary scopes are the line item scope to read all line items and create new ones
+  and the scores scope, to be able to post new scores. Also verifies that the line items
   endpoint is present.
   """
   def grade_passback_enabled?(lti_launch_params) do
@@ -214,7 +214,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
   end
 
   @doc """
-  Returns the lineitems URL from LTI launch params. If not present returns nil.
+  Returns the line items URL from LTI launch params. If not present returns nil.
   """
   def get_line_items_url(lti_launch_params) do
     Map.get(lti_launch_params, @lti_ags_claim_url, %{}) |> Map.get("lineitems")
