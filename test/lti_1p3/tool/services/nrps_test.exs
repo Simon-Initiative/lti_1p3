@@ -1,7 +1,7 @@
-defmodule Lti_1p3.Tool.Services.AGSTest do
+defmodule Lti_1p3.Tool.Services.NRPSTest do
   use ExUnit.Case, async: true
 
-  alias Lti_1p3.Tool.Services.AGS
+  alias Lti_1p3.Tool.Services.NRPS
 
   @lti_params %{
     "aud" => "10000000000041",
@@ -21,6 +21,10 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
         "https://purl.imsglobal.org/spec/lti-ags/scope/score"
       ],
       "validation_context" => nil
+    },
+    "https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice" => %{
+      "context_memberships_url" => "https://lms.example.edu/api/lti/courses/8/names_and_roles",
+      "service_versions" => ["2.0"]
     },
     "https://purl.imsglobal.org/spec/lti/claim/context" => %{
       "errors" => %{"errors" => %{}},
@@ -84,22 +88,10 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     "sub" => "c36c3c87-993f-4d2e-9e22-e47d5d2637ae"
   }
 
-  test "ags" do
-    assert AGS.grade_passback_enabled?(@lti_params)
+  test "nrps" do
+    assert NRPS.nrps_enabled?(@lti_params)
 
-    assert AGS.get_line_items_url(@lti_params) ==
-             "https://lms.example.edu/api/lti/courses/8/line_items"
-
-    lti_ags_claim = Map.get(@lti_params, "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint")
-
-    assert AGS.has_scope?(
-             lti_ags_claim,
-             "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly"
-           )
-
-    refute AGS.has_scope?(
-             lti_ags_claim,
-             "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.fake"
-           )
+    assert NRPS.get_context_memberships_url(@lti_params) ==
+             "https://lms.example.edu/api/lti/courses/8/names_and_roles"
   end
 end

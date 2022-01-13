@@ -4,8 +4,6 @@ defmodule Lti_1p3.Tool.Services.AGS do
 
   For information on the standard, see:
   https://www.imsglobal.org/spec/lti-ags/v2p0/
-
-  This module contains no dependencies on attempts, resources, or any other delivery specific construct.
   """
 
   @lti_ags_claim_url "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"
