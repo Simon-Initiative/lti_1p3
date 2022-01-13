@@ -10,6 +10,7 @@ defmodule Lti_1p3.Utils do
     case params[name] do
       nil ->
         {:error, %{reason: :missing_param, msg: "Missing #{name}"}}
+
       param ->
         {:ok, param}
     end
@@ -19,6 +20,7 @@ defmodule Lti_1p3.Utils do
     case Joken.peek_header(jwt_string) do
       {:ok, header} ->
         {:ok, header}
+
       {:error, reason} ->
         {:error, %{reason: reason, msg: "Invalid JWT"}}
     end
@@ -28,22 +30,21 @@ defmodule Lti_1p3.Utils do
     case Joken.peek_claims(jwt_string) do
       {:ok, claims} ->
         {:ok, claims}
+
       {:error, reason} ->
         {:error, %{reason: reason, msg: "Invalid JWT"}}
     end
   end
 
   def peek_jwt_kid(jwt_string) do
-    with {:ok, jwt_body} <- peek_header(jwt_string)
-    do
+    with {:ok, jwt_body} <- peek_header(jwt_string) do
       {:ok, jwt_body["kid"]}
     end
   end
 
   def validate_jwt_signature(jwt_string, key_set_url) do
     with {:ok, kid} <- peek_jwt_kid(jwt_string),
-         {:ok, public_key} <- fetch_public_key(key_set_url, kid)
-    do
+         {:ok, public_key} <- fetch_public_key(key_set_url, kid) do
       {_kty, pk} = JOSE.JWK.to_map(public_key)
 
       signer = Joken.Signer.create("RS256", pk)
@@ -51,6 +52,7 @@ defmodule Lti_1p3.Utils do
       case Joken.verify_and_validate(%{}, jwt_string, signer) do
         {:ok, jwt} ->
           {:ok, jwt}
+
         {:error, reason} ->
           {:error, %{reason: reason, msg: "Invalid JWT"}}
       end
@@ -60,24 +62,27 @@ defmodule Lti_1p3.Utils do
   def validate_timestamps(jwt) do
     try do
       case {Timex.from_unix(jwt["exp"]), Timex.from_unix(jwt["iat"])} do
-      {exp, iat} ->
-        # get the current time with a buffer of a few seconds to account for clock skew and rounding
-        now = Timex.now()
-        buffer_sec = 2
-        a_few_seconds_ago = now |> Timex.subtract(Timex.Duration.from_seconds(buffer_sec))
-        a_few_seconds_ahead = now |> Timex.add(Timex.Duration.from_seconds(buffer_sec))
+        {exp, iat} ->
+          # get the current time with a buffer of a few seconds to account for clock skew and rounding
+          now = Timex.now()
+          buffer_sec = 2
+          a_few_seconds_ago = now |> Timex.subtract(Timex.Duration.from_seconds(buffer_sec))
+          a_few_seconds_ahead = now |> Timex.add(Timex.Duration.from_seconds(buffer_sec))
 
-        # check if jwt is expired and/or issued at invalid time
-        case {Timex.before?(exp, a_few_seconds_ago), Timex.after?(iat, a_few_seconds_ahead)} do
-          {false, false} ->
-            {:ok}
-          {_, false} ->
-            {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT exp is expired"}}
-          {false, _} ->
-            {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT iat is invalid"}}
-          _ ->
-            {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT exp and iat are invalid"}}
-        end
+          # check if jwt is expired and/or issued at invalid time
+          case {Timex.before?(exp, a_few_seconds_ago), Timex.after?(iat, a_few_seconds_ahead)} do
+            {false, false} ->
+              {:ok}
+
+            {_, false} ->
+              {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT exp is expired"}}
+
+            {false, _} ->
+              {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT iat is invalid"}}
+
+            _ ->
+              {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT exp and iat are invalid"}}
+          end
       end
     rescue
       _error -> {:error, %{reason: :invalid_jwt_timestamp, msg: "Timestamps are invalid"}}
@@ -101,44 +106,52 @@ defmodule Lti_1p3.Utils do
     if jwt["iss"] == issuer do
       {:ok}
     else
-      {:error, %{reason: :invalid_issuer, msg: "Issuer ('iss' claim) in JWT doesn't match the expected issuer"}}
+      {:error,
+       %{
+         reason: :invalid_issuer,
+         msg: "Issuer ('iss' claim) in JWT doesn't match the expected issuer"
+       }}
     end
   end
 
   def validate_audience(jwt, audience) do
     audience_claims = String.split(jwt["aud"], ",", trim: true)
+
     if audience_claims in audience do
       {:ok}
     else
-      {:error, %{reason: :invalid_issuer, msg: "Audience ('aud' claim) in JWT doesn't contain the expected audience"}}
+      {:error,
+       %{
+         reason: :invalid_issuer,
+         msg: "Audience ('aud' claim) in JWT doesn't contain the expected audience"
+       }}
     end
   end
 
   def fetch_public_key(key_set_url, kid) do
-    public_key_set = case http_client!().get(key_set_url) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        Jason.decode!(body)
-      error ->
-        error
-    end
+    public_key_set =
+      case http_client!().get(key_set_url) do
+        {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+          Jason.decode!(body)
+
+        error ->
+          error
+      end
 
     case Enum.find(public_key_set["keys"], fn key -> key["kid"] == kid end) do
       nil ->
-        {:error, %{reason: :key_not_found, msg: "Key with kid #{kid} not found in the fetched list of public keys"}}
+        {:error,
+         %{
+           reason: :key_not_found,
+           msg: "Key with kid #{kid} not found in the fetched list of public keys"
+         }}
 
       public_key_json ->
-        public_key = public_key_json
-          |> JOSE.JWK.from
+        public_key =
+          public_key_json
+          |> JOSE.JWK.from()
 
         {:ok, public_key}
     end
-  end
-
-  def generate_cache_key(issuer, client_id, user_sub, context_id) do
-    # it doesn't matter that the sha256 key is hard coded here since it does not need
-    # to be secret, we only need the hashing mechanism to guarantee
-    # a given set of parameters always generates the same hash for a concise key
-    :crypto.mac(:hmac, :sha256, "generate_cache_key", "#{issuer}#{client_id}#{user_sub}#{context_id}")
-    |> Base.encode16()
   end
 end
