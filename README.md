@@ -115,7 +115,6 @@ Before a launch can be performed, a platform must be registered with your tool b
   deployment_id: "some-deployment-id",
   registration_id: registration.id,
 })
-
 ```
 
 Your tool implementation will need to have 2 tool-specific endpoints for handling LTI requests. The first will be a `login` endpoint, which will issue a login request back to the platform. The second will be a `launch` endpoint, which will validate the lti launch details and if successful, display the resource. The details of both of these steps is outlined in the [LTI 1.3 Launch Overview](./docs/lti_1p3_overview.md). You will need to provide both of these endpoint urls to the platform as part of their registration process for your tool.

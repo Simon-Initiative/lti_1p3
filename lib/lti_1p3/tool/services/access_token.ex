@@ -1,4 +1,4 @@
-defmodule Lti_1p3.Tool.AccessToken do
+defmodule Lti_1p3.Tool.Services.AccessToken do
   import Lti_1p3.Config
 
   @enforce_keys [:access_token, :token_type, :expires_in, :scope]
