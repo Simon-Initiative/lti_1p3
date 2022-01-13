@@ -64,7 +64,6 @@ defmodule Lti_1p3.ToolDataProvider do
   alias Lti_1p3.Jwk
   alias Lti_1p3.Tool.Registration
   alias Lti_1p3.Tool.Deployment
-  alias Lti_1p3.Tool.LtiParams
 
   @doc """
   Creates a new registration.
@@ -74,7 +73,8 @@ defmodule Lti_1p3.ToolDataProvider do
       iex> create_registration(%Registration{})
       {:error, %Lti_1p3.DataProviderError{}}
   """
-  @callback create_registration(%Registration{}) :: {:ok, %Registration{}} | {:error, DataProviderError.t()}
+  @callback create_registration(%Registration{}) ::
+              {:ok, %Registration{}} | {:error, DataProviderError.t()}
 
   @doc """
   Creates a new deployment.
@@ -84,7 +84,8 @@ defmodule Lti_1p3.ToolDataProvider do
       iex> create_deployment(%Deployment{})
       {:error, %Lti_1p3.DataProviderError{}}
   """
-  @callback create_deployment(%Deployment{}) :: {:ok, %Deployment{}} | {:error, DataProviderError.t()}
+  @callback create_deployment(%Deployment{}) ::
+              {:ok, %Deployment{}} | {:error, DataProviderError.t()}
 
   @doc """
   Gets the registration and deployment associated with the given issuer, client_id and deployment_id.
@@ -94,7 +95,8 @@ defmodule Lti_1p3.ToolDataProvider do
       iex> get_rd_by_deployment_id(issuer, client_id, deployment_id)
       {nil, nil}
   """
-  @callback get_registration_deployment(String.t(), String.t(), String.t()) :: {%Registration{}, %Deployment{}} | nil
+  @callback get_registration_deployment(String.t(), String.t(), String.t()) ::
+              {%Registration{}, %Deployment{}} | nil
 
   @doc """
   Gets the jwk associated with the given Registration.
@@ -104,7 +106,8 @@ defmodule Lti_1p3.ToolDataProvider do
       iex> get_jwk_by_registration(%Registration{})
       {:error, %Lti_1p3.DataProviderError{}}
   """
-  @callback get_jwk_by_registration(%Registration{}) :: {:ok, %Jwk{}} | {:error, DataProviderError.t()}
+  @callback get_jwk_by_registration(%Registration{}) ::
+              {:ok, %Jwk{}} | {:error, DataProviderError.t()}
 
   @doc """
   Gets the registration associated with the given issuer and client_id.
@@ -125,26 +128,6 @@ defmodule Lti_1p3.ToolDataProvider do
       nil
   """
   @callback get_deployment(%Registration{}, String.t()) :: %Deployment{} | nil
-
-  @doc """
-  Gets the LTI params associated with a user from the cache using the given key.
-  ## Examples
-      iex> get_lti_params_by_key(key)
-       %LtiParams{}
-      iex> get_lti_params_by_key(key)
-      nil
-  """
-  @callback get_lti_params_by_key(String.t()) :: %LtiParams{} | nil
-
-  @doc """
-  Creates or updates the LTI params for a user, keying off the 'key' value.
-  ## Examples
-      iex> create_or_update_lti_params(%LtiParams{})
-      {:ok, %LtiParams{}}
-      iex> create_or_update_lti_params(%LtiParams{})
-      {:error, %Lti_1p3.DataProviderError{}}
-  """
-  @callback create_or_update_lti_params(%LtiParams{}) :: {:ok, %LtiParams{}} | {:error, DataProviderError.t()}
 end
 
 defmodule Lti_1p3.PlatformDataProvider do
@@ -159,7 +142,8 @@ defmodule Lti_1p3.PlatformDataProvider do
       iex> create_platform_instance(%PlatformInstance{})
       {:error, %Lti_1p3.DataProviderError{}}
   """
-  @callback create_platform_instance(%PlatformInstance{}) :: {:ok, %PlatformInstance{}} | {:error, DataProviderError.t()}
+  @callback create_platform_instance(%PlatformInstance{}) ::
+              {:ok, %PlatformInstance{}} | {:error, DataProviderError.t()}
 
   @doc """
   Gets a platform instance associated with the given client_id.
@@ -189,7 +173,8 @@ defmodule Lti_1p3.PlatformDataProvider do
       iex> create_login_hint(%LoginHint{})
       {:error, %Lti_1p3.DataProviderError{}}
   """
-  @callback create_login_hint(%LoginHint{}) :: {:ok, %LoginHint{}} | {:error, DataProviderError.t()}
+  @callback create_login_hint(%LoginHint{}) ::
+              {:ok, %LoginHint{}} | {:error, DataProviderError.t()}
 
   @doc """
   Deletes all expired login hints older than the provided ttl_sec. If no ttl_sec is provided,
@@ -203,12 +188,13 @@ end
 defmodule Lti_1p3.DataProviderError do
   defstruct [:msg, :reason]
 
-  @type error_reason() :: :unique_constraint_violation
-      | :not_found
-      | :unknown
+  @type error_reason() ::
+          :unique_constraint_violation
+          | :not_found
+          | :unknown
 
   @type t() :: %__MODULE__{
-      msg: String.t(),
-      reason: error_reason(),
-  }
+          msg: String.t(),
+          reason: error_reason()
+        }
 end

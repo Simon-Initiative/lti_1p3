@@ -9,7 +9,6 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
   alias Lti_1p3.Nonce
   alias Lti_1p3.Tool.Registration
   alias Lti_1p3.Tool.Deployment
-  alias Lti_1p3.Tool.LtiParams
   alias Lti_1p3.Platform.PlatformInstance
   alias Lti_1p3.Platform.LoginHint
 
@@ -21,7 +20,6 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
       nonces: %{},
       registrations: %{},
       deployments: [],
-      lti_params: %{},
       platform_instances: %{},
       login_hints: %{},
     }
@@ -221,26 +219,6 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
       state.deployments
       |> Enum.find(fn d -> d.registration_id == registration_id && d.deployment_id == deployment_id end)
     end)
-  end
-
-  @impl ToolDataProvider
-  def get_lti_params_by_key(key) do
-    Agent.get(__MODULE__, fn state ->
-      state.lti_params
-      |> Map.get(key)
-    end)
-  end
-
-  @impl ToolDataProvider
-  def create_or_update_lti_params(%LtiParams{key: key} = lti_params) do
-    lti_params = lti_params
-      |> Map.put(:id, get_next_index(:lti_params))
-
-    Agent.update(__MODULE__, fn state ->
-      %{state | lti_params: state.lti_params |> Map.put(key, lti_params)}
-    end)
-
-    {:ok, lti_params}
   end
 
 

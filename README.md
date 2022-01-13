@@ -118,7 +118,7 @@ Before a launch can be performed, a platform must be registered with your tool b
 
 ```
 
-Your tool implementation will need to have 2 tool-specific endpoints for handling LTI requests. The first will be a `login` endpoint, which will issue a login request back to the platform. The second will be a `launch` endpoint, which will validate the lti launch details and if successful, cache the LTI params from the request and display the resource. The details of both of these steps is outlined in the [LTI 1.3 Launch Overview](./docs/lti_1p3_overview.md). You will need to provide both of these endpoint urls to the platform as part of their registration process for your tool.
+Your tool implementation will need to have 2 tool-specific endpoints for handling LTI requests. The first will be a `login` endpoint, which will issue a login request back to the platform. The second will be a `launch` endpoint, which will validate the lti launch details and if successful, display the resource. The details of both of these steps is outlined in the [LTI 1.3 Launch Overview](./docs/lti_1p3_overview.md). You will need to provide both of these endpoint urls to the platform as part of their registration process for your tool.
 
 The first endpoint, `login`, uses the `Lti_1p3.Tool.OidcLogin` module to validate the request and return a state key and redirect_uri. For example:
 
@@ -148,7 +148,7 @@ end
 
 Notice how the returned state is stored in the session so that it can be used later in the launch request. The user is then redirected to the returned redirect_url. In the case where an error is returned, a map with the reason code, error message, and any additional data associated with the specific error is returned and can be handled accordingly.
 
-The second endpoint, `launch`, uses the `Lti_1p3.Tool.LaunchValidation` module to validate the launch and cache the lti params. For example:
+The second endpoint, `launch`, uses the `Lti_1p3.Tool.LaunchValidation` module to validate the launch and extract the lti claims. For example:
 
 ```elixir
 defmodule MyAppWeb.LtiController do
@@ -159,12 +159,8 @@ defmodule MyAppWeb.LtiController do
   def launch(conn, params) do
     session_state = Plug.Conn.get_session(conn, "state")
     case Lti_1p3.Tool.LaunchValidation.validate(params, session_state) do
-      {:ok, lti_params, key} ->
-        # store key in the session so that the cached lti_params can be retrieved in later requests
-        conn = conn
-          |> Plug.Conn.put_session(:lti_1p3_key, key)
-
-        handle_valid_lti_1p3_launch(conn, lti_params)
+      {:ok, claims} ->
+        handle_valid_lti_1p3_launch(conn, claims)
 
       {:error, %{reason: :invalid_registration, msg: _msg, issuer: issuer, client_id: client_id}} ->
         handle_invalid_registration(conn, issuer, client_id)
@@ -182,14 +178,7 @@ defmodule MyAppWeb.LtiController do
 end
 ```
 
-If successful, `validate` returns the LTI params from the request as well as a `key` for the cached lti params, which can be used to retrieve the the LTI params associated with the user's latest launch by using the `Lti_1p3.Tool` module. This key is guaranteed to be unique to the platform, user, and context_id and reproducible given the same values. This means when a different set of LTI params for the same platform, user, and context_id are received, the generated key will be identical and the corresponding cached params will be updated to the new values.
-
-Note, this example of storing the `lti_1p3_key` assumes only a single platform will use the tool. If you expect more that one platform to use your tool
-concurrently, you may want to build out a more rich structure of storing these lti param keys in the session, such as including the full universal scope consisting of a platform identifier, user identifier and context identifier all in the session to guarantee the correct lti params can be loaded for a particular platform, user, and context.
-
-```elixir
-%Lti_1p3.Tool.LtiParams{params: lti_params} = Lti_1p3.Tool.get_lti_params_by_sub(sub)
-```
+If successful, `validate` returns the LTI claims from the request.
 
 If you are using Phoenix, don't forget to add these endpoints to your `router.ex`. The LTI 1.3 specification says the `login` request can be sent as either a `GET` or `POST`, so we must support both methods.
 
