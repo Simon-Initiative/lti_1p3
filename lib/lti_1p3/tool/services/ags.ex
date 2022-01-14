@@ -231,6 +231,16 @@ defmodule Lti_1p3.Tool.Services.AGS do
     end
   end
 
+  @doc """
+  Returns the required scopes for the AGS service.
+  """
+  def required_scopes() do
+    [
+      @lineitem_scope_url,
+      @scores_scope_url
+    ]
+  end
+
   defp headers(%AccessToken{} = access_token) do
     [
       {"Content-Type", "application/json"},

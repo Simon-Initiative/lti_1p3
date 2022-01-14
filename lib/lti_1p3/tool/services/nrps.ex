@@ -58,6 +58,15 @@ defmodule Lti_1p3.Tool.Services.NRPS do
   end
 
   @doc """
+  Returns the required scopes for the NRPS service.
+  """
+  def required_scopes() do
+    [
+      @context_memberships_url_key
+    ]
+  end
+
+  @doc """
   Returns the context memberships URL from LTI launch params. If not present returns nil.
   """
   def get_context_memberships_url(lti_launch_params) do
