@@ -35,7 +35,8 @@ defmodule Lti_1p3.Tool.Services.AccessTokenTest do
   defp registration do
     %{
       auth_token_url: "https://example.com/auth_token_url",
-      client_id: "12345"
+      client_id: "12345",
+      auth_server: "auth_audience"
     }
   end
 
