@@ -12,6 +12,12 @@ defmodule Lti_1p3.MixProject do
       aliases: aliases(),
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
       package: package(),
       description: description(),
       name: "Lti 1p3",
@@ -29,10 +35,10 @@ defmodule Lti_1p3.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:excoveralls, "~> 0.10", only: :test},
-      {:ex_doc, "~> 0.23", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.14", only: :test},
+      {:ex_doc, "~> 0.28", only: :dev, runtime: false},
       {:httpoison, "~> 1.6"},
-      {:jason, "~> 1.0"},
+      {:jason, "~> 1.3"},
       {:joken, "~> 2.2.0"},
       {:mox, "~> 0.5", only: :test},
       {:timex, "~> 3.5"},

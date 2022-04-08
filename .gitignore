@@ -22,6 +22,8 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 lti_1p3-*.tar
 
+# vscode settings / tasks
+.vscode
 
 # Temporary files for e.g. tests
 /tmp
