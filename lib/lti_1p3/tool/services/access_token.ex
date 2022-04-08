@@ -38,9 +38,17 @@ defmodule Lti_1p3.Tool.Services.AccessToken do
       {:error, "invalid_scope"}
   """
 
-  def fetch_access_token(%{auth_token_url: auth_token_url, client_id: client_id}, scopes, _host) do
+  def fetch_access_token(
+        %{auth_token_url: auth_token_url, client_id: client_id, auth_server: auth_audience},
+        scopes,
+        _host
+      ) do
     client_assertion =
-      create_client_assertion(%{auth_token_url: auth_token_url, client_id: client_id})
+      create_client_assertion(%{
+        auth_token_url: auth_token_url,
+        client_id: client_id,
+        auth_aud: auth_audience
+      })
 
     request_token(auth_token_url, client_assertion, scopes)
   end
@@ -78,7 +86,11 @@ defmodule Lti_1p3.Tool.Services.AccessToken do
     end
   end
 
-  defp create_client_assertion(%{auth_token_url: auth_token_url, client_id: client_id}) do
+  defp create_client_assertion(%{
+         auth_token_url: auth_token_url,
+         client_id: client_id,
+         auth_aud: auth_audience
+       }) do
     # Get the active private key
     {:ok, active_jwk} = provider!().get_active_jwk()
 
@@ -90,7 +102,7 @@ defmodule Lti_1p3.Tool.Services.AccessToken do
     # define our custom claims
     custom_claims = %{
       "iss" => client_id,
-      "aud" => auth_token_url,
+      "aud" => audience(auth_token_url, auth_audience),
       "sub" => client_id
     }
 
@@ -98,4 +110,8 @@ defmodule Lti_1p3.Tool.Services.AccessToken do
 
     token
   end
+
+  defp audience(auth_token_url, nil), do: auth_token_url
+  defp audience(auth_token_url, ""), do: auth_token_url
+  defp audience(_auth_token_url, auth_audience), do: auth_audience
 end
