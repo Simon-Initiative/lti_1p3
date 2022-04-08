@@ -21,7 +21,23 @@ defmodule Lti_1p3.Tool.Services.AccessToken do
   1. The registration from which an access token is being requested
   2. A list of scopes being requested
   3. The host name of this instance of Torus
+
+  ## Examples
+
+      iex> fetch_access_token(registration, scopes, host)
+      {:ok,
+        %Lti_1p3.Tool.Services.AccessToken{
+          "scope" => "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
+          "access_token" => "actual_access_token",
+          "token_type" => "Bearer",
+          "expires_in" => "3600"
+        }
+      }
+
+      iex> fetch_access_token(bad_tool)
+      {:error, "invalid_scope"}
   """
+
   def fetch_access_token(%{auth_token_url: auth_token_url, client_id: client_id}, scopes, _host) do
     client_assertion =
       create_client_assertion(%{auth_token_url: auth_token_url, client_id: client_id})
