@@ -8,7 +8,7 @@ on:
       - master
 
 jobs:
-  build-test-publish:
+  publish:
     runs-on: ubuntu-latest
 
     env:
