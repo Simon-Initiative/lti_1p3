@@ -98,7 +98,7 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
         key_set_url: "some key_set_url",
         auth_token_url: "some auth_token_url",
         auth_login_url: "some auth_login_url",
-        auth_server: "some auth_server",
+        auth_server: "some auth_aud",
         tool_jwk_id: jwk.id
       })
 

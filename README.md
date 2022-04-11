@@ -28,6 +28,7 @@ Documentation can be found at [https://hexdocs.pm/lti_1p3](https://hexdocs.pm/lt
 ### Config
 
 Add the following to `config/config.exs`:
+
 ```elixir
 use Mix.Config
 
@@ -104,7 +105,7 @@ Before a launch can be performed, a platform must be registered with your tool b
   key_set_url: "https://platform.example.edu/.well-known/jwks.json",
   auth_token_url: "https://platform.example.edu/access_tokens",
   auth_login_url: "https://platform.example.edu/authorize_redirect",
-  auth_server: "https://platform.example.edu",
+  auth_server: "https://platform.example.edu/oauth2/aud/token",
   tool_jwk_id: jwk.id,
 })
 
@@ -228,7 +229,7 @@ defmodule MyAppWeb.LtiController do
       {:ok, redirect_uri, state, id_token} ->
         conn
         |> render("post_redirect.html", redirect_uri: redirect_uri, state: state, id_token: id_token)
-      
+
       {:error, %{reason: _reason, msg: msg}} ->
           render(conn, "lti_error.html", reason: msg)
     end
@@ -237,32 +238,31 @@ end
 ```
 
 Example of `post_redirect.html`, a self-submitting POST form with state and id_token containing the final LTI params:
+
 ```html
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>You are being redirected...</title>
-    </head>
-    <body>
-      <div>
-          You are being redirected...
-      </div>
-        <form name="post_redirect" action="<%= @redirect_uri %>" method="post">
-            <input type="hidden" name="state" value="<%= @state %>">
-            <input type="hidden" name="id_token" value="<%= @id_token %>">
+  <head>
+    <title>You are being redirected...</title>
+  </head>
+  <body>
+    <div>You are being redirected...</div>
+    <form name="post_redirect" action="<%= @redirect_uri %>" method="post">
+      <input type="hidden" name="state" value="<%= @state %>" />
+      <input type="hidden" name="id_token" value="<%= @id_token %>" />
 
-            <noscript>
-              <input type="submit" value="Click here to continue">
-            </noscript>
-        </form>
+      <noscript>
+        <input type="submit" value="Click here to continue" />
+      </noscript>
+    </form>
 
-        <script type="text/javascript">
-          window.onload=function(){
-            document.getElementsByName('post_redirect')[0].style.display = 'none';
-            document.forms["post_redirect"].submit();
-          }
-        </script>
-    </body>
+    <script type="text/javascript">
+      window.onload = function () {
+        document.getElementsByName("post_redirect")[0].style.display = "none";
+        document.forms["post_redirect"].submit();
+      };
+    </script>
+  </body>
 </html>
 ```
 
@@ -272,10 +272,10 @@ Data providers are implementations of the `DataProvider` behavior which provide 
 
 ### Existing Data Providers
 
-| Name        | Module    | Description                 |
-| ------------|-----------|-----------------------------|
-| Memory Provider (Default) | `Lti_1p3.DataProviders.MemoryProvider` | An Elixir agent-based, non-durable in-memory store |
-| Ecto Provider | `Lti_1p3.DataProviders.EctoProvider` | An Ecto-based, persistent store (External Dependency: https://github.com/Simon-Initiative/lti_1p3_ecto_provider) |
+| Name                      | Module                                 | Description                                                                                                      |
+| ------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Memory Provider (Default) | `Lti_1p3.DataProviders.MemoryProvider` | An Elixir agent-based, non-durable in-memory store                                                               |
+| Ecto Provider             | `Lti_1p3.DataProviders.EctoProvider`   | An Ecto-based, persistent store (External Dependency: https://github.com/Simon-Initiative/lti_1p3_ecto_provider) |
 
 To use a specific data provider, simply install the provider dependency and set the module you would like to use as your `provider` in `config.config.ex`.
 
@@ -289,7 +289,6 @@ config :lti_1p3,
 
 # ... import_config
 ```
-
 
 ### Custom Data Provider
 
@@ -305,6 +304,7 @@ config :lti_1p3,
 
 # ... import_config
 ```
+
 ## Full LTI 1.3 Implementation Example
 
 This library was built for the purposes of supporting the Open Learning Initiative's next generation learning platform, [Torus](https://github.com/Simon-Initiative/oli-torus). For a complete implementation of all the concepts discussed here and usage of this library, take a look at the open source repository on Github, specifically [lti_controller.ex](https://github.com/Simon-Initiative/oli-torus/blob/master/lib/oli_web/controllers/lti_controller.ex).
