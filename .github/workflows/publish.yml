@@ -1,0 +1,43 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "*"
+    branches:
+      - master
+
+jobs:
+  elixir-build-test:
+    runs-on: ubuntu-latest
+
+    env:
+      MIX_ENV: test
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v2
+
+      - name: 🧪 Setup elixir
+        uses: erlef/setup-elixir@v1
+        with:
+          elixir-version: 1.12.0 # Define the elixir version [required]
+          otp-version: 24.0 # Define the OTP version [required]
+
+      - name: ⬇️ Install elixir dependencies
+        run: mix deps.get
+
+      - name: 🔨 Build dependencies
+        run: mix deps.compile
+
+      - name: 🔨 Build project
+        run: mix clean && mix compile --warnings-as-errors
+
+      - name: ▶️ Run tests
+        run: mix test
+
+      - name: 🚀 Publish package to hex.pm
+        uses: wesleimp/action-publish-hex@v1
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
