@@ -38,6 +38,17 @@ jobs:
         run: mix test
 
       - name: 🚀 Publish package to hex.pm
-        uses: wesleimp/action-publish-hex@v1
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: |
+          if [[ -z "${HEX_API_KEY}" ]]; then
+            echo "HEX_API_KEY is not set" && exit 1
+          fi
+
+          echo "===> Build hex package"
+          echo 
+          mix hex.build
+
+          echo "===> Publishing hex package"
+          echo
+          mix hex.publish --yes
