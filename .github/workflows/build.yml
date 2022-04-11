@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  elixir-build-test:
+  build-test:
     runs-on: ubuntu-latest
 
     env:
