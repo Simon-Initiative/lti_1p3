@@ -27,11 +27,9 @@ defmodule Lti_1p3.Tool.Services.AGS do
     url = "#{line_item.id}/scores"
     body = score |> Jason.encode!()
 
-    with {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] <-
-           http_client!().post(url, body, headers(access_token)),
-         {:ok, result} <- Jason.decode(body) do
-      {:ok, result}
-    else
+    case http_client!().post(url, body, headers(access_token)) do
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] ->
+        {:ok, body}
       e ->
         Logger.error(
           "Error encountered posting score for user #{score.userId} for line item '#{line_item.label}' #{inspect(e)}"
