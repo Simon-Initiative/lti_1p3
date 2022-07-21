@@ -214,10 +214,25 @@ defmodule Lti_1p3.Tool.Services.AGS do
   end
 
   @doc """
-  Returns the line items URL from LTI launch params. If not present returns nil.
+  Returns the line items URL from LTI launch params.
+  If not present returns nil.
+  If a registration is present, uses the auth server domain + the line items path.
   """
-  def get_line_items_url(lti_launch_params) do
-    Map.get(lti_launch_params, @lti_ags_claim_url, %{}) |> Map.get("lineitems")
+  def get_line_items_url(lti_launch_params, registration \\ %{}) do
+    line_items_url =
+      lti_launch_params
+      |> Map.get(@lti_ags_claim_url, %{})
+      |> Map.get("lineitems")
+
+    unless is_nil(line_items_url) do
+      %URI{path: line_items_path} = URI.parse(line_items_url)
+
+      registration
+      |> Map.get(:auth_server, line_items_url)
+      |> URI.parse()
+      |> Map.put(:path, line_items_path)
+      |> URI.to_string()
+    end
   end
 
   @doc """

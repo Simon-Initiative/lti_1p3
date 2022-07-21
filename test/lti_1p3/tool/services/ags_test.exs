@@ -87,9 +87,6 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
   test "ags" do
     assert AGS.grade_passback_enabled?(@lti_params)
 
-    assert AGS.get_line_items_url(@lti_params) ==
-             "https://lms.example.edu/api/lti/courses/8/line_items"
-
     lti_ags_claim = Map.get(@lti_params, "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint")
 
     assert AGS.has_scope?(
@@ -101,5 +98,23 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
              lti_ags_claim,
              "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.fake"
            )
+  end
+
+  describe "get_line_items_url" do
+    test "returns nil if no line items claim in the params" do
+      refute AGS.get_line_items_url(%{})
+      refute AGS.get_line_items_url(%{}, %{})
+    end
+
+    test "returns the url from line items claim when no registration present" do
+      assert AGS.get_line_items_url(@lti_params) ==
+        "https://lms.example.edu/api/lti/courses/8/line_items"
+    end
+
+    test "returns the url from line items claim with the registration auth server domain" do
+      assert AGS.get_line_items_url(@lti_params, %{
+        auth_server: "https://registration.example.com/lti/something"
+      }) == "https://registration.example.com/api/lti/courses/8/line_items"
+    end
   end
 end
