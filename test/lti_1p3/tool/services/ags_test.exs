@@ -1,7 +1,12 @@
 defmodule Lti_1p3.Tool.Services.AGSTest do
   use ExUnit.Case, async: true
 
+  import Mox
+
+  alias Lti_1p3.Test.MockHTTPoison
+  alias Lti_1p3.Tool.Services.AccessToken
   alias Lti_1p3.Tool.Services.AGS
+  alias Lti_1p3.Tool.Services.AGS.{LineItem, Score}
 
   @lti_params %{
     "aud" => "10000000000041",
@@ -116,5 +121,108 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
         auth_server: "https://registration.example.com/lti/something"
       }) == "https://registration.example.com/api/lti/courses/8/line_items"
     end
+  end
+
+  describe "post_score" do
+    setup [:setup_session]
+
+    test "json in response body is returned correctly", %{
+      score: score,
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn _url, _body, _headers ->
+        {:ok, %HTTPoison.Response{status_code: 200, body: Jason.encode!(%{result: "success"})}}
+      end)
+
+      {:ok, result} = AGS.post_score(score, line_item, access_token)
+
+      assert result == "{\"result\":\"success\"}"
+    end
+
+    test "empty in response body is returned correctly", %{
+      score: score,
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn _url, _body, _headers ->
+        {:ok, %HTTPoison.Response{status_code: 200, body: ""}}
+      end)
+
+      {:ok, result} = AGS.post_score(score, line_item, access_token)
+
+      assert result == ""
+    end
+
+    test "string in response body is returned correctly", %{
+      score: score,
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn _url, _body, _headers ->
+        {:ok, %HTTPoison.Response{status_code: 200, body: "some string"}}
+      end)
+
+      {:ok, result} = AGS.post_score(score, line_item, access_token)
+
+      assert result == "some string"
+    end
+
+    test "map in response body is returned correctly", %{
+      score: score,
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn _url, _body, _headers ->
+        {:ok, %HTTPoison.Response{status_code: 200, body: %{key: "some string"}}}
+      end)
+
+      {:ok, result} = AGS.post_score(score, line_item, access_token)
+
+      assert result == %{key: "some string"}
+    end
+
+    test "response with code different from 200 returns error", %{
+      score: score,
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn _url, _body, _headers ->
+        {:ok, %HTTPoison.Response{status_code: 404, body: Jason.encode!(%{result: "failure"})}}
+      end)
+
+      {:error, error} = AGS.post_score(score, line_item, access_token)
+
+      assert error == "Error posting score"
+    end
+  end
+
+  defp setup_session(_context) do
+    score = %Score{
+      timestamp: "Etc/UTC" |> DateTime.now() |> elem(1),
+      scoreGiven: 10,
+      scoreMaximum: 10,
+      comment: "comment",
+      activityProgress: "activityProgress",
+      gradingProgress: "gradingProgress",
+      userId: "userId"
+    }
+
+    line_item = %LineItem{
+      id: "id",
+      scoreMaximum: 10,
+      label: "label",
+      resourceId: "resourceId"
+    }
+
+    access_token = %AccessToken{
+      scope:
+        "https://purl.imsglobal.org/spec/lti-ags/scope/score https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly",
+      access_token: "fake_token",
+      token_type: "Bearer",
+      expires_in: 3_600
+    }
+
+    {:ok, %{score: score, line_item: line_item, access_token: access_token}}
   end
 end
