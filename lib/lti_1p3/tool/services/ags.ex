@@ -226,10 +226,19 @@ defmodule Lti_1p3.Tool.Services.AGS do
       %URI{path: line_items_path} = URI.parse(line_items_url)
 
       registration
-      |> Map.get(:auth_server, line_items_url)
+      |> get_line_items_domain(line_items_url)
       |> URI.parse()
       |> Map.put(:path, line_items_path)
       |> URI.to_string()
+    end
+  end
+
+  defp get_line_items_domain(registration, default) do
+    line_items_service_domain = Map.get(registration, :line_items_service_domain)
+
+    cond do
+      is_nil(line_items_service_domain) or line_items_service_domain == "" -> default
+      true -> line_items_service_domain
     end
   end
 

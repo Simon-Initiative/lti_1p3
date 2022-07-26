@@ -8,6 +8,9 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
   alias Lti_1p3.Tool.Services.AGS
   alias Lti_1p3.Tool.Services.AGS.{LineItem, Score}
 
+  @line_items_url "https://lms.example.edu/api/lti/courses/8/line_items"
+  @lti_items_service_domain "https://registration.example.com/lti/something"
+
   @lti_params %{
     "aud" => "10000000000041",
     "azp" => "10000000000041",
@@ -18,7 +21,7 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     "given_name" => "First",
     "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint" => %{
       "errors" => %{"errors" => %{}},
-      "lineitems" => "https://lms.example.edu/api/lti/courses/8/line_items",
+      "lineitems" => @line_items_url,
       "scope" => [
         "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
         "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly",
@@ -108,17 +111,32 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
   describe "get_line_items_url" do
     test "returns nil if no line items claim in the params" do
       refute AGS.get_line_items_url(%{})
-      refute AGS.get_line_items_url(%{}, %{})
+      refute AGS.get_line_items_url(%{}, %{
+        line_items_service_domain: @lti_items_service_domain
+      })
     end
 
     test "returns the url from line items claim when no registration present" do
       assert AGS.get_line_items_url(@lti_params) ==
-        "https://lms.example.edu/api/lti/courses/8/line_items"
+        @line_items_url
+    end
+
+    test "returns the url from line items claim when registration present but not line_items_service_domain" do
+      assert AGS.get_line_items_url(@lti_params, %{auth_server: "some auth_server"}) ==
+        @line_items_url
+
+      assert AGS.get_line_items_url(@lti_params, %{
+        line_items_service_domain: ""
+      }) == @line_items_url
+
+      assert AGS.get_line_items_url(@lti_params, %{
+        line_items_service_domain: nil
+      }) == @line_items_url
     end
 
     test "returns the url from line items claim with the registration auth server domain" do
       assert AGS.get_line_items_url(@lti_params, %{
-        auth_server: "https://registration.example.com/lti/something"
+        line_items_service_domain: @lti_items_service_domain
       }) == "https://registration.example.com/api/lti/courses/8/line_items"
     end
   end
