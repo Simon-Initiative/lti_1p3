@@ -111,6 +111,7 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
   describe "get_line_items_url" do
     test "returns nil if no line items claim in the params" do
       refute AGS.get_line_items_url(%{})
+
       refute AGS.get_line_items_url(%{}, %{
         line_items_service_domain: @lti_items_service_domain
       })
@@ -122,8 +123,9 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     end
 
     test "returns the url from line items claim when registration present but not line_items_service_domain" do
-      assert AGS.get_line_items_url(@lti_params, %{auth_server: "some auth_server"}) ==
-        @line_items_url
+      assert AGS.get_line_items_url(@lti_params, %{
+        auth_server: "some auth_server"
+      }) == @line_items_url
 
       assert AGS.get_line_items_url(@lti_params, %{
         line_items_service_domain: ""
@@ -134,7 +136,7 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
       }) == @line_items_url
     end
 
-    test "returns the url from line items claim with the registration auth server domain" do
+    test "returns the url from line items claim with the registration line_items_service_domain" do
       assert AGS.get_line_items_url(@lti_params, %{
         line_items_service_domain: @lti_items_service_domain
       }) == "https://registration.example.com/api/lti/courses/8/line_items"

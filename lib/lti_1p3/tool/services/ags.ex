@@ -233,14 +233,10 @@ defmodule Lti_1p3.Tool.Services.AGS do
     end
   end
 
-  defp get_line_items_domain(registration, default) do
-    line_items_service_domain = Map.get(registration, :line_items_service_domain)
-
-    cond do
-      is_nil(line_items_service_domain) or line_items_service_domain == "" -> default
-      true -> line_items_service_domain
-    end
-  end
+  defp get_line_items_domain(%{line_items_service_domain: domain}, default)
+    when is_nil(domain) or domain == "", do: default
+  defp get_line_items_domain(%{line_items_service_domain: domain}, _default), do: domain
+  defp get_line_items_domain(_registration, default), do: default
 
   @doc """
   Returns true if the LTI AGS claim has a particular scope url, false if it does not.
