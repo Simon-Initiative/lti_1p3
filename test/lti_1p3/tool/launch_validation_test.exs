@@ -33,6 +33,57 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
 
       assert {:ok, _lti_params} = LaunchValidation.validate(params, session_state)
     end
+
+    test "passes validation when aud claim is a list" do
+      jwk = jwk_fixture()
+      registration = registration_fixture(%{tool_jwk_id: jwk.id})
+      deployment_id = "1"
+
+      _deployment =
+        deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
+
+      state = "some-state"
+      session_state = state
+
+      claims =
+        all_default_claims()
+        |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
+        |> Map.put("aud", ["12345"])
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+      params = %{"state" => state, "id_token" => id_token}
+
+      MockHTTPoison
+      |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
+
+      assert {:ok, _lti_params} = LaunchValidation.validate(params, session_state)
+    end
+
+    test "passes validation when JWK is not Base64URL encoded" do
+      jwk = jwk_fixture()
+      registration = registration_fixture(%{tool_jwk_id: jwk.id})
+      deployment_id = "1"
+
+      _deployment =
+        deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
+
+      state = "some-state"
+      session_state = state
+
+      claims =
+        all_default_claims()
+        |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+      params = %{"state" => state, "id_token" => id_token}
+
+      transform_fn = fn map -> Map.update!(map, "n", &convert_to_base64_encoding(&1)) end
+
+      MockHTTPoison
+      |> expect(:get, fn _url -> mock_get_jwk_keys(jwk, transform: transform_fn) end)
+
+      assert {:ok, _lti_params} = LaunchValidation.validate(params, session_state)
+    end
   end
 
   test "fails validation on missing oidc state" do
@@ -401,5 +452,13 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
                 reason: :invalid_message_type,
                 msg: "Invalid or unsupported message type \"InvalidMessageType\""
               }}
+  end
+
+  defp convert_to_base64_encoding(str) do
+    String.replace(str, ["-", "_"], fn
+      "-" -> "+"
+      "_" -> "/"
+      c -> c
+    end)
   end
 end
