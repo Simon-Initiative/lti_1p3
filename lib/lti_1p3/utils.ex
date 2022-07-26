@@ -149,9 +149,27 @@ defmodule Lti_1p3.Utils do
       public_key_json ->
         public_key =
           public_key_json
+          |> convert_to_base64url()
           |> JOSE.JWK.from()
 
         {:ok, public_key}
     end
+  end
+
+  @doc """
+  Given a map representing a JWK, encodes all its values to Base64URL.
+  """
+  @spec convert_to_base64url(map()) :: map()
+  def convert_to_base64url(key_map) do
+    for {k, v} <- key_map,
+        into: %{},
+        do: {
+          k,
+          String.replace(v, ["+", "/"], fn
+            "+" -> "-"
+            "/" -> "_"
+            c -> c
+          end)
+        }
   end
 end
