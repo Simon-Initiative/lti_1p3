@@ -226,12 +226,17 @@ defmodule Lti_1p3.Tool.Services.AGS do
       %URI{path: line_items_path} = URI.parse(line_items_url)
 
       registration
-      |> Map.get(:auth_server, line_items_url)
+      |> get_line_items_domain(line_items_url)
       |> URI.parse()
       |> Map.put(:path, line_items_path)
       |> URI.to_string()
     end
   end
+
+  defp get_line_items_domain(%{line_items_service_domain: domain}, default)
+    when is_nil(domain) or domain == "", do: default
+  defp get_line_items_domain(%{line_items_service_domain: domain}, _default), do: domain
+  defp get_line_items_domain(_registration, default), do: default
 
   @doc """
   Returns true if the LTI AGS claim has a particular scope url, false if it does not.
