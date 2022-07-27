@@ -194,7 +194,7 @@ defmodule Lti_1p3.Test.TestHelpers do
     }
   end
 
-  def mock_get_jwk_keys(jwk) do
+  def mock_get_jwk_keys(jwk, opts \\ []) do
     body =
       Jason.encode!(%{
         keys: [
@@ -207,9 +207,13 @@ defmodule Lti_1p3.Test.TestHelpers do
           |> Map.put("alg", jwk.alg)
           |> Map.put("kid", jwk.kid)
           |> Map.put("use", "sig")
+          |> maybe_transform(opts)
         ]
       })
 
     {:ok, %HTTPoison.Response{status_code: 200, body: body}}
   end
+
+  defp maybe_transform(map, transform: transform_fn), do: transform_fn.(map)
+  defp maybe_transform(map, _opts), do: map
 end

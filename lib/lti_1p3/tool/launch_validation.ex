@@ -82,9 +82,12 @@ defmodule Lti_1p3.Tool.LaunchValidation do
   defp peek_issuer_client_id(params) do
     with {:ok, jwt_string} <- extract_param(params, "id_token"),
          {:ok, jwt_claims} <- peek_claims(jwt_string) do
-      {:ok, jwt_claims["iss"], jwt_claims["aud"]}
+      {:ok, jwt_claims["iss"], peek_client_id(jwt_claims["aud"])}
     end
   end
+
+  defp peek_client_id([client_id | _]), do: client_id
+  defp peek_client_id(client_id), do: client_id
 
   defp validate_deployment(registration, jwt_body) do
     deployment_id = jwt_body["https://purl.imsglobal.org/spec/lti/claim/deployment_id"]

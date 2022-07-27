@@ -10,7 +10,7 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
   setup :verify_on_exit!
 
   describe "launch validation" do
-    test "passes validation for a valid launch request and caches lti params" do
+    setup do
       jwk = jwk_fixture()
       registration = registration_fixture(%{tool_jwk_id: jwk.id})
       deployment_id = "1"
@@ -19,8 +19,15 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
         deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
 
       state = "some-state"
-      session_state = state
 
+      [jwk: jwk, registration: registration, deployment_id: deployment_id, state: state]
+    end
+
+    test "passes validation for a valid launch request and caches lti params", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
       claims =
         all_default_claims()
         |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
@@ -31,7 +38,46 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
       MockHTTPoison
       |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
 
-      assert {:ok, _lti_params} = LaunchValidation.validate(params, session_state)
+      assert {:ok, _lti_params} = LaunchValidation.validate(params, state)
+    end
+
+    test "passes validation when aud claim is a list", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
+        |> Map.put("aud", ["12345"])
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+      params = %{"state" => state, "id_token" => id_token}
+
+      MockHTTPoison
+      |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
+
+      assert {:ok, _lti_params} = LaunchValidation.validate(params, state)
+    end
+
+    test "passes validation when JWK is not Base64URL encoded", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+      params = %{"state" => state, "id_token" => id_token}
+
+      transform_fn = fn map -> Map.update!(map, "n", &convert_to_base64_encoding(&1)) end
+
+      MockHTTPoison
+      |> expect(:get, fn _url -> mock_get_jwk_keys(jwk, transform: transform_fn) end)
+
+      assert {:ok, _lti_params} = LaunchValidation.validate(params, state)
     end
   end
 
@@ -401,5 +447,13 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
                 reason: :invalid_message_type,
                 msg: "Invalid or unsupported message type \"InvalidMessageType\""
               }}
+  end
+
+  defp convert_to_base64_encoding(str) do
+    String.replace(str, ["-", "_"], fn
+      "-" -> "+"
+      "_" -> "/"
+      c -> c
+    end)
   end
 end
