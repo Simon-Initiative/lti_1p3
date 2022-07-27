@@ -165,11 +165,10 @@ defmodule Lti_1p3.Utils do
         into: %{},
         do: {
           k,
-          String.replace(v, ["+", "/"], fn
-            "+" -> "-"
-            "/" -> "_"
-            c -> c
-          end)
+          case Base.decode64(v, padding: false) do
+            :error -> v
+            {:ok, decoded} -> Base.url_encode64(decoded, padding: false)
+          end
         }
   end
 end
