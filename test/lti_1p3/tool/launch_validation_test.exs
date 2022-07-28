@@ -72,7 +72,9 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
       id_token = generate_id_token(jwk, jwk.kid, claims)
       params = %{"state" => state, "id_token" => id_token}
 
-      transform_fn = fn map -> Map.update!(map, "n", &convert_to_base64_encoding(&1)) end
+      transform_fn = fn map ->
+        Map.update!(map, "n", &convert_to_base64_encoding(&1)) |> Map.put("exp", 12345)
+      end
 
       MockHTTPoison
       |> expect(:get, fn _url -> mock_get_jwk_keys(jwk, transform: transform_fn) end)
