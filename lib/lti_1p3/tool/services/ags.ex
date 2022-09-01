@@ -24,10 +24,9 @@ defmodule Lti_1p3.Tool.Services.AGS do
   def post_score(%Score{} = score, %LineItem{} = line_item, %AccessToken{} = access_token) do
     Logger.debug("Posting score for user #{score.userId} for line item '#{line_item.label}'")
 
-    url = "#{line_item.id}/scores"
     body = score |> Jason.encode!()
 
-    case http_client!().post(url, body, headers(access_token)) do
+    case http_client!().post(build_url_with_path(line_item.id, "scores"), body, score_headers(access_token)) do
       {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] ->
         {:ok, body}
       e ->
@@ -60,7 +59,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
     # here as a Torus "resource_id" is strictly coincidence.
 
     prefixed_resource_id = LineItem.to_resource_id(resource_id)
-    request_url = "#{line_items_service_url}?resource_id=#{prefixed_resource_id}&limit=1"
+    request_url = build_url_with_params(line_items_service_url, "resource_id=#{prefixed_resource_id}&limit=1")
 
     with {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] <-
            http_client!().get(request_url, headers(access_token)),
@@ -112,7 +111,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
     # when one makes a request without a 'limit' parameter specified. Setting it explicitly to 1000
     # bypasses this default limit, of course, and works in all cases until a course more than
     # a thousand grade book entries.
-    url = line_items_service_url <> "?limit=1000"
+    url = build_url_with_params(line_items_service_url, "limit=1000")
 
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
            http_client!().get(url, headers(access_token)),
@@ -259,10 +258,36 @@ defmodule Lti_1p3.Tool.Services.AGS do
     ]
   end
 
+  # ---------------------------------------------------------
+  # Helpers to build headers correctly
   defp headers(%AccessToken{} = access_token) do
     [
-      {"Content-Type", "application/json"},
-      {"Authorization", "Bearer #{access_token.access_token}"}
-    ]
+      {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+      {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"}
+    ] ++ access_token_header(access_token.access_token)
+  end
+
+  defp score_headers(%AccessToken{} = access_token) do
+    [{"Content-Type", "application/vnd.ims.lis.v1.score+json"}]
+      ++ access_token_header(access_token.access_token)
+  end
+
+  defp access_token_header(access_token),
+    do: [{"Authorization", "Bearer #{access_token}"}]
+
+  # ---------------------------------------------------------
+  # Helpers to build urls correctly (if base url contian query params)
+  defp build_url_with_path(base_url, path_to_add) do
+    case String.split(base_url, "?") do
+      [base_url, query_params] -> "#{base_url}/#{path_to_add}?#{query_params}"
+      _ -> "#{base_url}/#{path_to_add}"
+    end
+  end
+
+  defp build_url_with_params(base_url, params_to_add) do
+    case String.split(base_url, "?") do
+      [base_url, query_params] -> "#{base_url}?#{query_params}&#{params_to_add}"
+      _ -> "#{base_url}?#{params_to_add}"
+    end
   end
 end

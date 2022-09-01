@@ -8,6 +8,10 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
   alias Lti_1p3.Tool.Services.AGS
   alias Lti_1p3.Tool.Services.AGS.{LineItem, Score}
 
+  @some_label "New Page"
+  @query_param "type=22"
+
+  @line_item_url "https://lms.example.edu/api/lti/courses/8/line_items/21/lineitem"
   @line_items_url "https://lms.example.edu/api/lti/courses/8/line_items"
   @lti_items_service_domain "https://registration.example.com/lti/something"
 
@@ -215,6 +219,241 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
 
       assert error == "Error posting score"
     end
+
+    test "scores url is build correctly without query params", %{
+      score: score,
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn url, _body, _headers ->
+        assert "#{@line_item_url}/scores" == url
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: ""}}
+      end)
+
+      {:ok, _response} = AGS.post_score(score, line_item, access_token)
+    end
+  end
+
+  describe "headers" do
+    setup [:setup_session]
+
+    test "post score set headers correctly", %{
+      score: score,
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn _url, _body, headers ->
+        assert [
+          {"Content-Type", "application/vnd.ims.lis.v1.score+json"},
+          {"Authorization", "Bearer fake_token"}
+        ] == headers
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: ""}}
+      end)
+
+      {:ok, _response} = AGS.post_score(score, line_item, access_token)
+    end
+
+    test "fetch line item set headers correctly", %{
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :get, fn _url, headers ->
+        assert [
+          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+          {"Authorization", "Bearer fake_token"}
+        ] == headers
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "[]"}}
+      end)
+
+      {:ok, _response} =
+        AGS.fetch_line_items(
+          @line_items_url,
+          access_token
+        )
+    end
+
+    test "create line item set headers correctly", %{
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn _url, _body, headers ->
+        assert [
+          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+          {"Authorization", "Bearer fake_token"}
+        ] == headers
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
+      end)
+
+      {:ok, _response} =
+        AGS.create_line_item(
+          @line_items_url,
+          line_item.resourceId,
+          100,
+          @some_label,
+          access_token
+        )
+    end
+
+    test "update line item set headers correctly", %{
+      line_item: line_item,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :put, fn _url, _body, headers ->
+        assert [
+          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+          {"Authorization", "Bearer fake_token"}
+        ] == headers
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
+      end)
+
+      {:ok, _response} =
+        AGS.update_line_item(
+          line_item,
+          %{},
+          access_token
+        )
+    end
+
+    test "fetch or create line item set headers correctly", %{
+      line_item: line_item,
+      access_token: access_token,
+      maximum_score_provider: maximum_score_provider
+    } do
+      expect(MockHTTPoison, :post, fn _url, _body, headers ->
+        assert [
+          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+          {"Authorization", "Bearer fake_token"}
+        ] == headers
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
+      end)
+
+      expect(MockHTTPoison, :get, fn _url, headers ->
+        assert [
+          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+          {"Authorization", "Bearer fake_token"}
+        ] == headers
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "[]"}}
+      end)
+
+      {:ok, _response} =
+        AGS.fetch_or_create_line_item(
+          @line_items_url,
+          line_item.resourceId,
+          maximum_score_provider,
+          @some_label,
+          access_token
+        )
+    end
+  end
+
+  describe "urls generation" do
+    setup [:setup_session]
+
+    test "post score url is build correctly with query params", %{
+      score: score,
+      line_item_id_with_params: line_item_id_with_params,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn url, _body, _headers ->
+        assert "#{@line_item_url}/scores?#{@query_param}" == url
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: ""}}
+      end)
+
+      {:ok, _response} = AGS.post_score(score, line_item_id_with_params, access_token)
+    end
+
+    test "create line item url is build correctly with query params", %{
+      line_item_id_with_params: line_item_id_with_params,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :post, fn url, _body, _headers ->
+        assert line_item_id_with_params.id == url
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
+      end)
+
+      {:ok, _response} =
+        AGS.create_line_item(
+          line_item_id_with_params.id,
+          line_item_id_with_params.resourceId,
+          100,
+          @some_label,
+          access_token
+        )
+    end
+
+    test "update line item url is build correctly with query params", %{
+      line_item_id_with_params: line_item_id_with_params,
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :put, fn url, _body, _headers ->
+        assert line_item_id_with_params.id == url
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
+      end)
+
+      {:ok, _response} =
+        AGS.update_line_item(
+          line_item_id_with_params,
+          %{},
+          access_token
+        )
+    end
+
+    test "fetch line item set headers correctly", %{
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :get, fn url, _headers ->
+        assert "#{@line_items_url}?#{@query_param}&limit=1000" == url
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "[]"}}
+      end)
+
+      {:ok, _response} =
+        AGS.fetch_line_items(
+          "#{@line_items_url}?#{@query_param}",
+          access_token
+        )
+    end
+
+    test "fetch or create line item url is build correctly with query params", %{
+      line_item_id_with_params: line_item_id_with_params,
+      access_token: access_token,
+      maximum_score_provider: maximum_score_provider
+    } do
+      expect(MockHTTPoison, :post, fn url, _body, _headers ->
+        assert line_item_id_with_params.id == url
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
+      end)
+
+      expect(MockHTTPoison, :get, fn url, _headers ->
+        assert "#{line_item_id_with_params.id}&resource_id=#{line_item_id_with_params.resourceId}&limit=1" == url
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "[]"}}
+      end)
+
+      {:ok, _response} =
+        AGS.fetch_or_create_line_item(
+          line_item_id_with_params.id,
+          line_item_id_with_params.resourceId,
+          maximum_score_provider,
+          @some_label,
+          access_token
+        )
+    end
   end
 
   defp setup_session(_context) do
@@ -229,10 +468,17 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     }
 
     line_item = %LineItem{
-      id: "id",
+      id: @line_item_url,
       scoreMaximum: 10,
       label: "label",
-      resourceId: "resourceId"
+      resourceId: 9876
+    }
+
+    line_item_id_with_params = %LineItem{
+      id: "#{@line_item_url}?#{@query_param}",
+      scoreMaximum: 10,
+      label: "label",
+      resourceId: 9876
     }
 
     access_token = %AccessToken{
@@ -243,6 +489,14 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
       expires_in: 3_600
     }
 
-    {:ok, %{score: score, line_item: line_item, access_token: access_token}}
+    maximum_score_provider = fn -> 1.0 end
+
+    {:ok, %{
+      score: score,
+      line_item: line_item,
+      access_token: access_token,
+      line_item_id_with_params: line_item_id_with_params,
+      maximum_score_provider: maximum_score_provider
+    }}
   end
 end
