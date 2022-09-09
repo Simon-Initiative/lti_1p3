@@ -412,7 +412,7 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
         )
     end
 
-    test "fetch line item set headers correctly", %{
+    test "fetch line item is build correctly with query params", %{
       access_token: access_token
     } do
       expect(MockHTTPoison, :get, fn url, _headers ->
