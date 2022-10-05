@@ -76,7 +76,8 @@ defmodule Lti_1p3.Tool.Services.NRPS do
   defp headers(%AccessToken{} = access_token) do
     [
       {"Content-Type", "application/json"},
-      {"Authorization", "Bearer #{access_token.access_token}"}
+      {"Authorization", "Bearer #{access_token.access_token}"},
+      {"Accept", "application/vnd.ims.lti-nrps.v2.membershipcontainer+json"}
     ]
   end
 end

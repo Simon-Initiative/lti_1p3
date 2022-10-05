@@ -1,5 +1,5 @@
 defmodule Lti_1p3.Tool.Services.AGS.LineItem do
-  @derive Jason.Encoder
+  @derive {Jason.Encoder, except: [:id]}
   @enforce_keys [:scoreMaximum, :label, :resourceId]
   defstruct [:id, :scoreMaximum, :label, :resourceId]
 

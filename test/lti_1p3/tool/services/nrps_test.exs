@@ -1,7 +1,12 @@
 defmodule Lti_1p3.Tool.Services.NRPSTest do
   use ExUnit.Case, async: true
 
-  alias Lti_1p3.Tool.Services.NRPS
+  import Mox
+
+  alias Lti_1p3.Test.MockHTTPoison
+  alias Lti_1p3.Tool.Services.{AccessToken, NRPS}
+
+  @context_memberships_url "https://lms.example.edu/api/lti/courses/8/names_and_roles"
 
   @lti_params %{
     "aud" => "10000000000041",
@@ -23,7 +28,7 @@ defmodule Lti_1p3.Tool.Services.NRPSTest do
       "validation_context" => nil
     },
     "https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice" => %{
-      "context_memberships_url" => "https://lms.example.edu/api/lti/courses/8/names_and_roles",
+      "context_memberships_url" => @context_memberships_url,
       "service_versions" => ["2.0"]
     },
     "https://purl.imsglobal.org/spec/lti/claim/context" => %{
@@ -88,10 +93,46 @@ defmodule Lti_1p3.Tool.Services.NRPSTest do
     "sub" => "c36c3c87-993f-4d2e-9e22-e47d5d2637ae"
   }
 
-  test "nrps" do
-    assert NRPS.nrps_enabled?(@lti_params)
+  describe "nrps" do
+    setup [:setup_session]
 
-    assert NRPS.get_context_memberships_url(@lti_params) ==
-             "https://lms.example.edu/api/lti/courses/8/names_and_roles"
+    test "access to lti params is correct" do
+      assert NRPS.nrps_enabled?(@lti_params)
+
+      assert NRPS.get_context_memberships_url(@lti_params) ==
+               @context_memberships_url
+    end
+
+    test "nrps fetch memberships set headers correctly", %{
+      access_token: access_token
+    } do
+      expect(MockHTTPoison, :get, fn _url, headers ->
+        assert [
+          {"Content-Type", "application/json"},
+          {"Authorization", "Bearer fake_token"},
+          {"Accept", "application/vnd.ims.lti-nrps.v2.membershipcontainer+json"}
+        ] == headers
+
+        {:ok, %HTTPoison.Response{status_code: 200, body: "{\"members\": []}"}}
+      end)
+
+      {:ok, _response} =
+        NRPS.fetch_memberships(
+          @context_memberships_url,
+          access_token
+        )
+    end
+  end
+
+  defp setup_session(_context) do
+    access_token = %AccessToken{
+      scope:
+        "https://purl.imsglobal.org/spec/lti-ags/scope/score https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly",
+      access_token: "fake_token",
+      token_type: "Bearer",
+      expires_in: 3_600
+    }
+
+    {:ok, %{access_token: access_token}}
   end
 end
