@@ -138,22 +138,34 @@ defmodule Lti_1p3.Utils do
           error
       end
 
-    case Enum.find(public_key_set["keys"], fn key -> key["kid"] == kid end) do
-      nil ->
-        {:error,
-         %{
-           reason: :key_not_found,
-           msg: "Key with kid #{kid} not found in the fetched list of public keys"
-         }}
+    if is_container(public_key_set) do
+      case Enum.find(public_key_set["keys"], fn key -> is_container(key) && key["kid"] == kid end) do
+        nil ->
+          return_key_not_found(kid)
 
-      public_key_json ->
-        public_key =
-          public_key_json
-          |> convert_map_to_base64url()
-          |> JOSE.JWK.from()
+        public_key_json ->
+          public_key =
+            public_key_json
+            |> convert_map_to_base64url()
+            |> JOSE.JWK.from()
 
-        {:ok, public_key}
+          {:ok, public_key}
+      end
+    else
+      return_key_not_found(kid)
     end
+  end
+
+  defp is_container(container) do
+    Keyword.keyword?(container) || is_map(container) || is_struct(container)
+  end
+
+  defp return_key_not_found(kid) do
+    {:error,
+     %{
+       reason: :key_not_found,
+       msg: "Key with kid #{kid} not found in the fetched list of public keys"
+     }}
   end
 
   @doc """
