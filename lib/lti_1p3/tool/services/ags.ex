@@ -22,7 +22,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
   Post a score to an existing line item, using an already acquired access token.
   """
   def post_score(%Score{} = score, %LineItem{} = line_item, %AccessToken{} = access_token) do
-    Logger.debug("Posting score for user #{score.userId} for line item '#{line_item.label}'")
+    Logger.info("Posting score for user #{score.userId} for line item '#{line_item.label}'")
 
     body = score |> Jason.encode!()
 
@@ -50,7 +50,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
         label,
         %AccessToken{} = access_token
       ) do
-    Logger.debug("Fetch or create line item for #{resource_id} #{label}")
+    Logger.info("fetch_or_create_line_item #{resource_id} #{label}")
 
     # Grade pass back 2.0 line items endpoint allows a GET request with a query
     # param filter.  We use that to request only the line item that corresponds
@@ -61,11 +61,15 @@ defmodule Lti_1p3.Tool.Services.AGS do
     prefixed_resource_id = LineItem.to_resource_id(resource_id)
     request_url = build_url_with_params(line_items_service_url, "resource_id=#{prefixed_resource_id}&limit=1")
 
+    Logger.info("fetch_or_create_line_item: URL #{request_url}")
+
     with {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] <-
            http_client!().get(request_url, headers(access_token)),
          {:ok, result} <- Jason.decode(body) do
       case result do
         [] ->
+          Logger.info("fetch_or_create_line_item #{resource_id} #{label}")
+
           create_line_item(
             line_items_service_url,
             resource_id,
@@ -77,6 +81,9 @@ defmodule Lti_1p3.Tool.Services.AGS do
         # it is important to match against a possible array of items, in case an LMS does
         # not properly support the limit parameter
         [raw_line_item | _] ->
+
+          Logger.info("fetch_or_create_line_item: Retrieved raw line item #{inspect(raw_line_item)} for #{resource_id} #{label}")
+
           line_item = to_line_item(raw_line_item)
 
           if line_item.label != label do
@@ -105,7 +112,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
   end
 
   def fetch_line_items(line_items_service_url, %AccessToken{} = access_token) do
-    Logger.debug("Fetch line items from #{line_items_service_url}")
+    Logger.info("Fetch line items from #{line_items_service_url}")
 
     # Unfortunately, at least Canvas implements a default limit of 10 line items
     # when one makes a request without a 'limit' parameter specified. Setting it explicitly to 1000
@@ -135,7 +142,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
         label,
         %AccessToken{} = access_token
       ) do
-    Logger.debug("Create line item for #{resource_id} #{label}")
+    Logger.info("Create line item for #{resource_id} #{label}")
 
     line_item = %LineItem{
       scoreMaximum: score_maximum,
@@ -164,7 +171,7 @@ defmodule Lti_1p3.Tool.Services.AGS do
   a {:ok, line_item} tuple.  On error, returns a {:error, error} tuple.
   """
   def update_line_item(%LineItem{} = line_item, changes, %AccessToken{} = access_token) do
-    Logger.debug("Updating line item #{line_item.id} for changes #{inspect(changes)}")
+    Logger.info("Updating line item #{line_item.id} for changes #{inspect(changes)}")
 
     updated_line_item = %LineItem{
       id: line_item.id,
