@@ -12,7 +12,7 @@ defmodule Lti_1p3.Test.TestCase do
   of the test unless the test case is marked as async.
   """
 
-  use ExUnit.CaseTemplate
+  use ExUnit.CaseTemplate, async: false
 
   using do
     quote do

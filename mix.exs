@@ -5,7 +5,7 @@ defmodule Lti_1p3.MixProject do
     [
       app: :lti_1p3,
       version: "0.6.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       elixirc_options: elixirc_options(Mix.env()),
       start_permanent: Mix.env() == :prod,
