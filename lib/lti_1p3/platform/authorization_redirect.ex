@@ -4,7 +4,8 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
 
   alias Lti_1p3.Platform.LoginHint
   alias Lti_1p3.Platform.LoginHints
-  alias Lti1p3.Claims.{ResourceLink}
+  alias Lti_1p3.Claims.{ResourceLink}
+  alias Lti_1p3.Tool.{ContextRole, PlatformRole}
 
   @type params() :: %{state: binary(), id_token: binary()}
   @type user() :: %{id: integer()}
@@ -12,7 +13,14 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
   @doc """
   Validates an authentication response and returns the state and platform lti params in a signed id_token signed if successful.
   """
-  @spec authorize_redirect(params(), user(), binary(), binary(), ResourceLink.t(), list()) ::
+  @spec authorize_redirect(
+          params(),
+          user(),
+          binary(),
+          binary(),
+          ResourceLink.t(),
+          list(ContextRole.t() | PlatformRole.t())
+        ) ::
           {:ok, binary(), binary(), binary()}
           | {:error, %{optional(atom()) => any(), reason: atom(), msg: String.t()}}
   def authorize_redirect(params, current_user, issuer, deployment_id, resource_link, roles) do

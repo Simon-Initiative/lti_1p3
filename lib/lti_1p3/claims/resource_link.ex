@@ -1,4 +1,4 @@
-defmodule Lti1p3.Claims.ResourceLink do
+defmodule Lti_1p3.Claims.ResourceLink do
   @moduledoc """
   A struct representing the resource link claim in an LTI 1.3 request.
 

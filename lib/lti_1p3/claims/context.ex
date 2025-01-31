@@ -1,4 +1,4 @@
-defmodule Lti1p3.Claims.Context do
+defmodule Lti_1p3.Claims.Context do
   @moduledoc """
   A struct representing the context claim in an LTI 1.3 request.
 

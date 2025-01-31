@@ -1,4 +1,4 @@
-defmodule Lti1p3.Claims.PlatformInstance do
+defmodule Lti_1p3.Claims.PlatformInstance do
   @moduledoc """
   A struct representing the platform instance claim in an LTI 1.3 request.
 

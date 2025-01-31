@@ -1,4 +1,4 @@
-defmodule Lti1p3.Claims.DeploymentId do
+defmodule Lti_1p3.Claims.DeploymentId do
   @moduledoc """
   A struct representing the resource link claim in an LTI 1.3 request.
 
@@ -15,6 +15,6 @@ defmodule Lti1p3.Claims.DeploymentId do
         }
 end
 
-defimpl Lti_1p3.Claims.Claim, for: Lti1p3.Claims.DeploymentId do
+defimpl Lti_1p3.Claims.Claim, for: Lti_1p3.Claims.DeploymentId do
   def get_key(_), do: "https://purl.imsglobal.org/spec/lti/claim/deployment_id"
 end
