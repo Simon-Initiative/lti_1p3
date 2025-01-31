@@ -7,4 +7,9 @@ defprotocol Lti_1p3.Claims.Claim do
       "https://purl.imsglobal.org/spec/lti/claim/some_claim"
   """
   def get_key(claim)
+
+  @doc """
+  Returns the value for a given claim
+  """
+  def get_value(claim)
 end

@@ -4,11 +4,30 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
 
   alias Lti_1p3.Platform.LoginHint
   alias Lti_1p3.Platform.LoginHints
-  alias Lti_1p3.Claims.{ResourceLink}
-  alias Lti_1p3.Tool.{ContextRole, PlatformRole}
+
+  alias Lti_1p3.Claims.Claim
+
+  alias Lti_1p3.Claims.{
+    MessageType,
+    Version,
+    ResourceLink,
+    DeploymentId,
+    Context,
+    Roles,
+    PlatformInstance,
+    TargetLinkUri
+  }
 
   @type params() :: %{state: binary(), id_token: binary()}
   @type user() :: %{id: integer()}
+
+  @type claim() ::
+          DeploymentId.t()
+          | TargetLinkUri.t()
+          | ResourceLink.t()
+          | Roles.t()
+          | Context.t()
+          | PlatformInstance.t()
 
   @doc """
   Validates an authentication response and returns the state and platform lti params in a signed id_token signed if successful.
@@ -17,13 +36,11 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
           params(),
           user(),
           binary(),
-          binary(),
-          ResourceLink.t(),
-          list(ContextRole.t() | PlatformRole.t())
+          list(claim())
         ) ::
           {:ok, binary(), binary(), binary()}
           | {:error, %{optional(atom()) => any(), reason: atom(), msg: String.t()}}
-  def authorize_redirect(params, current_user, issuer, deployment_id, resource_link, roles) do
+  def authorize_redirect(params, current_user, issuer, claims) do
     case provider!().get_platform_instance_by_client_id(params["client_id"]) do
       nil ->
         {:error,
@@ -49,45 +66,123 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
           signer = Joken.Signer.create("RS256", %{"pem" => active_jwk.pem}, custom_header)
           user_details = Map.from_struct(current_user)
 
-          {:ok, claims} =
-            Joken.Config.default_claims(iss: issuer, aud: client_id)
-            |> Joken.generate_claims(%{
-              "nonce" => UUID.uuid4(),
-              "sub" => user_details[:sub],
-              "name" => user_details[:name],
-              "given_name" => user_details[:given_name],
-              "family_name" => user_details[:family_name],
-              "middle_name" => user_details[:middle_name],
-              "picture" => user_details[:picture],
-              "email" => user_details[:email],
-              "email_verified," => user_details[:email_verified],
-              "locale" => user_details[:locale],
-              "nickname" => user_details[:nickname],
-              "preferred_username" => user_details[:preferred_username],
-              "website" => user_details[:website],
-              "gender" => user_details[:gender],
-              "birthdate" => user_details[:birthdate],
-              "zoneinfo" => user_details[:zoneinfo],
-              "phone_number" => user_details[:phone_number],
-              "phone_number_verified" => user_details[:phone_number_verified],
-              "address" => user_details[:address],
-              "https://purl.imsglobal.org/spec/lti/claim/message_type" =>
-                "LtiResourceLinkRequest",
-              "https://purl.imsglobal.org/spec/lti/claim/version" => "1.3.0",
-              "https://purl.imsglobal.org/spec/lti/claim/deployment_id" => deployment_id,
-              "https://purl.imsglobal.org/spec/lti/claim/target_link_uri" =>
-                platform_instance.target_link_uri,
-              "https://purl.imsglobal.org/spec/lti/claim/resource_link" => resource_link,
-              "https://purl.imsglobal.org/spec/lti/claim/roles" => Enum.map(roles, & &1.uri)
-            })
+          base_claims =
+            %{}
+            |> nonce()
+            |> oidc_standard_claims(user_details)
+            |> oidc_additional_claims(user_details)
+            |> add_claim(MessageType.message_type(:lti_resource_link_request))
+            |> add_claim(Version.version("1.3.0"))
 
-          {:ok, id_token, _claims} = Joken.encode_and_sign(claims, signer)
+          with {:ok, claims} <-
+                 build_claims_map(base_claims, claims,
+                   required: [
+                     DeploymentId.key(),
+                     TargetLinkUri.key(),
+                     ResourceLink.key(),
+                     Roles.key()
+                   ]
+                 ),
+               {:ok, claims} <-
+                 Joken.Config.default_claims(iss: issuer, aud: client_id)
+                 |> Joken.generate_claims(claims),
+               {:ok, id_token, _claims} <- Joken.encode_and_sign(claims, signer) do
+            state = params["state"]
+            redirect_uri = params["redirect_uri"]
 
-          state = params["state"]
-          redirect_uri = params["redirect_uri"]
-
-          {:ok, redirect_uri, state, id_token}
+            {:ok, redirect_uri, state, id_token}
+          else
+            error ->
+              error
+          end
         end
+    end
+  end
+
+  defp nonce(map) do
+    Map.merge(map, %{"nonce" => UUID.uuid4()})
+  end
+
+  defp oidc_standard_claims(map, user_details) do
+    [
+      :sub,
+      :given_name,
+      :family_name,
+      :name,
+      :email,
+      :locale
+    ]
+    |> Enum.reduce(map, fn key, acc ->
+      case Map.get(user_details, key) do
+        nil ->
+          acc
+
+        value ->
+          Map.put(acc, Atom.to_string(key), value)
+      end
+    end)
+  end
+
+  defp oidc_additional_claims(map, user_details) do
+    [
+      :middle_name,
+      :picture,
+      :email,
+      :email_verified,
+      :nickname,
+      :preferred_username,
+      :website,
+      :gender,
+      :birthdate,
+      :zoneinfo,
+      :phone_number,
+      :phone_number_verified,
+      :address
+    ]
+    |> Enum.reduce(map, fn key, acc ->
+      case Map.get(user_details, key) do
+        nil ->
+          acc
+
+        value ->
+          Map.put(acc, Atom.to_string(key), value)
+      end
+    end)
+  end
+
+  defp add_claim(map, claim) do
+    key = claim |> Claim.get_key()
+    value = claim |> Claim.get_value() |> scrub_empty_values()
+
+    Map.put(map, key, value)
+  end
+
+  defp scrub_empty_values(%{} = map) do
+    Enum.reduce(map, %{}, fn {key, value}, acc ->
+      if value != nil do
+        Map.put(acc, key, value)
+      else
+        acc
+      end
+    end)
+  end
+
+  defp scrub_empty_values(value), do: value
+
+  defp build_claims_map(initial, claims, required: required) do
+    case Enum.reduce(claims, {initial, required}, fn claim, {claims_map, required} ->
+           {add_claim(claims_map, claim), List.delete(required, Claim.get_key(claim))}
+         end) do
+      {claims_map, []} ->
+        {:ok, claims_map}
+
+      {_, missing_claims} ->
+        {:error,
+         %{
+           reason: :missing_required_claims,
+           msg: "Missing required claims: #{Enum.join(missing_claims, ", ")}",
+           missing_claims: missing_claims
+         }}
     end
   end
 
