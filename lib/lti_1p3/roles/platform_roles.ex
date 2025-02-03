@@ -1,6 +1,6 @@
-defmodule Lti_1p3.Tool.PlatformRoles do
-  alias Lti_1p3.Tool.PlatformRole
-  alias Lti_1p3.Tool.Lti_1p3_User
+defmodule Lti_1p3.Roles.PlatformRoles do
+  alias Lti_1p3.Roles.PlatformRole
+  alias Lti_1p3.Roles.Lti_1p3_User
 
   # Core system roles
   @system_administrator %PlatformRole{
@@ -107,29 +107,30 @@ defmodule Lti_1p3.Tool.PlatformRoles do
     uri: "http://purl.imsglobal.org/vocab/lis/v2/institution/person#ProspectiveStudent"
   }
 
-  def list_roles(), do: [
-    @system_administrator,
-    @system_none,
-    @system_account_admin,
-    @system_creator,
-    @system_sys_admin,
-    @system_sys_support,
-    @system_user,
-    @institution_administrator,
-    @institution_faculty,
-    @institution_guest,
-    @institution_none,
-    @institution_other,
-    @institution_staff,
-    @institution_student,
-    @institution_alumni,
-    @institution_instructor,
-    @institution_learner,
-    @institution_member,
-    @institution_mentor,
-    @institution_observer,
-    @institution_prospective_student,
-  ]
+  def list_roles(),
+    do: [
+      @system_administrator,
+      @system_none,
+      @system_account_admin,
+      @system_creator,
+      @system_sys_admin,
+      @system_sys_support,
+      @system_user,
+      @institution_administrator,
+      @institution_faculty,
+      @institution_guest,
+      @institution_none,
+      @institution_other,
+      @institution_staff,
+      @institution_student,
+      @institution_alumni,
+      @institution_instructor,
+      @institution_learner,
+      @institution_member,
+      @institution_mentor,
+      @institution_observer,
+      @institution_prospective_student
+    ]
 
   @doc """
   Returns a role from a given atom if it is valid, otherwise returns nil
@@ -160,27 +161,71 @@ defmodule Lti_1p3.Tool.PlatformRoles do
   @doc """
   Returns a role from a given uri if it is valid, otherwise returns nil
   """
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator"), do: @system_administrator
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#None"), do: @system_none
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#AccountAdmin"), do: @system_account_admin
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#Creator"), do: @system_creator
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#SysAdmin"), do: @system_sys_admin
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#SysSupport"), do: @system_sys_support
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#User"), do: @system_user
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator"), do: @institution_administrator
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty"), do: @institution_faculty
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Guest"), do: @institution_guest
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#None"), do: @institution_none
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Other"), do: @institution_other
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff"), do: @institution_staff
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student"), do: @institution_student
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Alumni"), do: @institution_alumni
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor"), do: @institution_instructor
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner"), do: @institution_learner
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Member"), do: @institution_member
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Mentor"), do: @institution_mentor
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Observer"), do: @institution_observer
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#ProspectiveStudent"), do: @institution_prospective_student
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator"),
+    do: @system_administrator
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#None"),
+    do: @system_none
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#AccountAdmin"),
+    do: @system_account_admin
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#Creator"),
+    do: @system_creator
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#SysAdmin"),
+    do: @system_sys_admin
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#SysSupport"),
+    do: @system_sys_support
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#User"),
+    do: @system_user
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator"),
+    do: @institution_administrator
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty"),
+    do: @institution_faculty
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Guest"),
+    do: @institution_guest
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#None"),
+    do: @institution_none
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Other"),
+    do: @institution_other
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff"),
+    do: @institution_staff
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student"),
+    do: @institution_student
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Alumni"),
+    do: @institution_alumni
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor"),
+    do: @institution_instructor
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner"),
+    do: @institution_learner
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Member"),
+    do: @institution_member
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Mentor"),
+    do: @institution_mentor
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/institution/person#Observer"),
+    do: @institution_observer
+
+  def get_role_by_uri(
+        "http://purl.imsglobal.org/vocab/lis/v2/institution/person#ProspectiveStudent"
+      ),
+      do: @institution_prospective_student
+
   def get_role_by_uri(_invalid), do: nil
 
   @doc """
@@ -190,8 +235,8 @@ defmodule Lti_1p3.Tool.PlatformRoles do
   def get_roles_by_uris(uris) do
     # create a list only containing valid roles
     uris
-      |> Enum.map(&(get_role_by_uri(&1)))
-      |> Enum.filter(&(&1 != nil))
+    |> Enum.map(&get_role_by_uri(&1))
+    |> Enum.filter(&(&1 != nil))
   end
 
   @doc """
@@ -231,7 +276,6 @@ defmodule Lti_1p3.Tool.PlatformRoles do
     Enum.any?(roles, fn r -> user_roles_map[r.uri] == true end)
   end
 
-
   # Returns true if a user has all of the given roles
   @spec has_roles?(Lti_1p3_User.t(), [PlatformRole.t()], :all) :: boolean()
   def has_roles?(user, roles, :all) when is_list(roles) do
@@ -242,7 +286,8 @@ defmodule Lti_1p3.Tool.PlatformRoles do
 
   # Returns a map with keys of all role uris with value true if the user has the role, false otherwise
   defp platform_roles_as_map(user_roles) do
-    Enum.reduce(list_roles(), %{}, fn r, acc -> Map.put_new(acc, r.uri, Enum.any?(user_roles, &(&1.uri == r.uri))) end)
+    Enum.reduce(list_roles(), %{}, fn r, acc ->
+      Map.put_new(acc, r.uri, Enum.any?(user_roles, &(&1.uri == r.uri)))
+    end)
   end
-
 end
