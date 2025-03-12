@@ -1,6 +1,6 @@
-defmodule Lti_1p3.Tool.ContextRoles do
-  alias Lti_1p3.Tool.ContextRole
-  alias Lti_1p3.Tool.Lti_1p3_User
+defmodule Lti_1p3.Roles.ContextRoles do
+  alias Lti_1p3.Roles.ContextRole
+  alias Lti_1p3.Roles.Lti_1p3_User
 
   # Core context roles
   @context_administrator %ContextRole{
@@ -44,16 +44,17 @@ defmodule Lti_1p3.Tool.ContextRoles do
     uri: "http://purl.imsglobal.org/vocab/lis/v2/membership#Officer"
   }
 
-  def list_roles(), do: [
-    @context_administrator,
-    @context_content_developer,
-    @context_instructor,
-    @context_learner,
-    @context_mentor,
-    @context_manager,
-    @context_member,
-    @context_officer,
-  ]
+  def list_roles(),
+    do: [
+      @context_administrator,
+      @context_content_developer,
+      @context_instructor,
+      @context_learner,
+      @context_mentor,
+      @context_manager,
+      @context_member,
+      @context_officer
+    ]
 
   @doc """
   Returns a role from a given atom if it is valid, otherwise returns nil
@@ -71,14 +72,30 @@ defmodule Lti_1p3.Tool.ContextRoles do
   @doc """
   Returns a role from a given uri if it is valid, otherwise returns nil
   """
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator"), do: @context_administrator
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#ContentDeveloper"), do: @context_content_developer
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"), do: @context_instructor
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"), do: @context_learner
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Mentor"), do: @context_mentor
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Manager"), do: @context_manager
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Member"), do: @context_member
-  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Officer"), do: @context_officer
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator"),
+    do: @context_administrator
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#ContentDeveloper"),
+    do: @context_content_developer
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"),
+    do: @context_instructor
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"),
+    do: @context_learner
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Mentor"),
+    do: @context_mentor
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Manager"),
+    do: @context_manager
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Member"),
+    do: @context_member
+
+  def get_role_by_uri("http://purl.imsglobal.org/vocab/lis/v2/membership#Officer"),
+    do: @context_officer
+
   def get_role_by_uri(_invalid), do: nil
 
   @doc """
@@ -88,8 +105,8 @@ defmodule Lti_1p3.Tool.ContextRoles do
   def get_roles_by_uris(uris) do
     # create a list only containing valid roles
     uris
-      |> Enum.map(&(get_role_by_uri(&1)))
-      |> Enum.filter(&(&1 != nil))
+    |> Enum.map(&get_role_by_uri(&1))
+    |> Enum.filter(&(&1 != nil))
   end
 
   @doc """
@@ -139,7 +156,8 @@ defmodule Lti_1p3.Tool.ContextRoles do
 
   # Returns a map with keys of all role uris with value true if the user has the role, false otherwise
   defp context_roles_as_map(context_roles) do
-    Enum.reduce(list_roles(), %{}, fn r, acc -> Map.put_new(acc, r.uri, Enum.any?(context_roles, &(&1.uri == r.uri))) end)
+    Enum.reduce(list_roles(), %{}, fn r, acc ->
+      Map.put_new(acc, r.uri, Enum.any?(context_roles, &(&1.uri == r.uri)))
+    end)
   end
-
 end

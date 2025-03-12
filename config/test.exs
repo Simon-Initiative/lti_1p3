@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 config :lti_1p3,
   http_client: Lti_1p3.Test.MockHTTPoison,
