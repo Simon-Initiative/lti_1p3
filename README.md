@@ -16,7 +16,7 @@ The package can be installed by adding `lti_1p3` to your list of dependencies in
 ```elixir
 def deps do
   [
-    {:lti_1p3, "~> 0.4.5"}
+    {:lti_1p3, "~> 0.7.1"}
   ]
 end
 ```
