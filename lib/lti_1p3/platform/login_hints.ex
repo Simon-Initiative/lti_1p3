@@ -17,15 +17,22 @@ defmodule Lti_1p3.Platform.LoginHints do
   def get_login_hint_by_value(value), do: provider!().get_login_hint_by_value(value)
 
   @doc """
-  Creates a login_hint for a user.
+  Creates a login_hint for a user. Takes a user id for the current user in the active session.
+  Optionally takes a context parameter to store additional information about the login_hint. The
+  context value can be a string, map, or nil (default).
   ## Examples
       iex> create_login_hint(session_user_id)
       {:ok, %LoginHint{}}
       iex> create_login_hint(session_user_id)
       {:error, %Lti_1p3.DataProviderError{}}
   """
-  def create_login_hint(session_user_id, context \\ nil), do:
-    provider!().create_login_hint(%LoginHint{value: UUID.uuid4(), session_user_id: session_user_id, context: context})
+  def create_login_hint(session_user_id, context \\ nil),
+    do:
+      provider!().create_login_hint(%LoginHint{
+        value: UUID.uuid4(),
+        session_user_id: session_user_id,
+        context: context
+      })
 
   @doc """
   Removes all login_hints older than the configured login_hint_ttl_sec value
@@ -38,5 +45,4 @@ defmodule Lti_1p3.Platform.LoginHints do
 
     Logger.info("Login_hint cleanup complete.")
   end
-
 end
