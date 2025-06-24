@@ -3,10 +3,9 @@ defmodule Lti_1p3.Platform.LoginHint do
   defstruct [:id, :value, :session_user_id, :context]
 
   @type t() :: %__MODULE__{
-    id: integer(),
-    value: String.t(),
-    session_user_id: String.t(),
-    context: String.t(),
-  }
-
+          id: integer(),
+          value: String.t(),
+          session_user_id: String.t(),
+          context: String.t() | map() | nil
+        }
 end

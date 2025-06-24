@@ -68,11 +68,11 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
 
           base_claims =
             %{}
-            |> nonce()
             |> oidc_standard_claims(user_details)
             |> oidc_additional_claims(user_details)
             |> add_claim(MessageType.message_type(:lti_resource_link_request))
             |> add_claim(Version.version("1.3.0"))
+            |> add_claim("nonce", params["nonce"])
 
           with {:ok, claims} <-
                  build_claims_map(base_claims, claims,
@@ -97,10 +97,6 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
           end
         end
     end
-  end
-
-  defp nonce(map) do
-    Map.merge(map, %{"nonce" => UUID.uuid4()})
   end
 
   defp oidc_standard_claims(map, user_details) do
@@ -154,6 +150,10 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
     key = claim |> Claim.get_key()
     value = claim |> Claim.get_value() |> scrub_empty_values()
 
+    Map.put(map, key, value)
+  end
+
+  defp add_claim(map, key, value) do
     Map.put(map, key, value)
   end
 
