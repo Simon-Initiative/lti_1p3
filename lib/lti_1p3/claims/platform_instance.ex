@@ -26,7 +26,7 @@ defmodule Lti_1p3.Claims.PlatformInstance do
           version: String.t()
         }
 
-  def key, do: "https://purl.imsglobal.org/spec/lti/claim/platform_instance"
+  def key, do: "https://purl.imsglobal.org/spec/lti/claim/tool_platform"
 
   @doc """
   Create a new platform instance claim.
