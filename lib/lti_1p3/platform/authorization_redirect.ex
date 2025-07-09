@@ -8,7 +8,6 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
   alias Lti_1p3.Claims.Claim
 
   alias Lti_1p3.Claims.{
-    MessageType,
     Version,
     ResourceLink,
     DeploymentId,

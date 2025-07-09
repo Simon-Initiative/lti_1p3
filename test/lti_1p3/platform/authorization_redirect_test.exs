@@ -26,6 +26,7 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
       } = generate_lti_platform_stubs()
 
       claims = [
+        Claims.MessageType.message_type(:lti_resource_link_request),
         Claims.DeploymentId.deployment_id(deployment_id),
         Claims.TargetLinkUri.target_link_uri("some-valid-url"),
         Claims.ResourceLink.resource_link("some-resource-link-id"),
@@ -248,11 +249,10 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
                 %{
                   reason: :missing_required_claims,
                   msg:
-                    "Missing required claims: https://purl.imsglobal.org/spec/lti/claim/deployment_id, https://purl.imsglobal.org/spec/lti/claim/target_link_uri, https://purl.imsglobal.org/spec/lti/claim/resource_link, https://purl.imsglobal.org/spec/lti/claim/roles",
+                    "Missing required claims: https://purl.imsglobal.org/spec/lti/claim/deployment_id, https://purl.imsglobal.org/spec/lti/claim/target_link_uri, https://purl.imsglobal.org/spec/lti/claim/roles",
                   missing_claims: [
                     "https://purl.imsglobal.org/spec/lti/claim/deployment_id",
                     "https://purl.imsglobal.org/spec/lti/claim/target_link_uri",
-                    "https://purl.imsglobal.org/spec/lti/claim/resource_link",
                     "https://purl.imsglobal.org/spec/lti/claim/roles"
                   ]
                 }}
