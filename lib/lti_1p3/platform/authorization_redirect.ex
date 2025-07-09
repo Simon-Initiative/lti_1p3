@@ -70,7 +70,6 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
             %{}
             |> oidc_standard_claims(user_details)
             |> oidc_additional_claims(user_details)
-            |> add_claim(MessageType.message_type(:lti_resource_link_request))
             |> add_claim(Version.version("1.3.0"))
             |> add_claim("nonce", params["nonce"])
 
@@ -79,7 +78,6 @@ defmodule Lti_1p3.Platform.AuthorizationRedirect do
                    required: [
                      DeploymentId.key(),
                      TargetLinkUri.key(),
-                     ResourceLink.key(),
                      Roles.key()
                    ]
                  ),
