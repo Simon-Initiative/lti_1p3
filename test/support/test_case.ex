@@ -17,13 +17,15 @@ defmodule Lti_1p3.Test.TestCase do
   using do
     quote do
       import Lti_1p3.Test.TestHelpers
-
     end
   end
 
   setup do
     {:ok, initial_state} = Lti_1p3.DataProviders.MemoryProvider.init()
-    {:ok, genserver_pid} = Lti_1p3.DataProviders.MemoryProvider.start_link(initial_state)
-    {:ok, process: genserver_pid}
+
+    case Lti_1p3.DataProviders.MemoryProvider.start_link(initial_state) do
+      {:ok, genserver_pid} -> {:ok, process: genserver_pid}
+      {:error, {:already_started, genserver_pid}} -> {:ok, process: genserver_pid}
+    end
   end
 end

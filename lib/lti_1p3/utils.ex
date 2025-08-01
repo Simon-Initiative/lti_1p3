@@ -44,7 +44,7 @@ defmodule Lti_1p3.Utils do
 
   def validate_jwt_signature(jwt_string, key_set_url) do
     with {:ok, kid} <- peek_jwt_kid(jwt_string),
-         {:ok, public_key} <- fetch_public_key(key_set_url, kid) do
+         {:ok, public_key} <- key_provider!().get_public_key(key_set_url, kid) do
       {_kty, pk} = JOSE.JWK.to_map(public_key)
 
       signer = Joken.Signer.create("RS256", pk)
@@ -126,46 +126,6 @@ defmodule Lti_1p3.Utils do
          msg: "Audience ('aud' claim) in JWT doesn't contain the expected audience"
        }}
     end
-  end
-
-  def fetch_public_key(key_set_url, kid) do
-    public_key_set =
-      case http_client!().get(key_set_url) do
-        {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-          Jason.decode!(body)
-
-        error ->
-          error
-      end
-
-    if is_container(public_key_set) do
-      case Enum.find(public_key_set["keys"], fn key -> is_container(key) && key["kid"] == kid end) do
-        nil ->
-          return_key_not_found(kid)
-
-        public_key_json ->
-          public_key =
-            public_key_json
-            |> convert_map_to_base64url()
-            |> JOSE.JWK.from()
-
-          {:ok, public_key}
-      end
-    else
-      return_key_not_found(kid)
-    end
-  end
-
-  defp is_container(container) do
-    Keyword.keyword?(container) || is_map(container) || is_struct(container)
-  end
-
-  defp return_key_not_found(kid) do
-    {:error,
-     %{
-       reason: :key_not_found,
-       msg: "Key with kid #{kid} not found in the fetched list of public keys"
-     }}
   end
 
   @doc """
