@@ -1,4 +1,7 @@
 defmodule Lti_1p3.Config do
+  alias Lti_1p3.KeyProviders.MemoryKeyProvider
+  alias Lti_1p3.Registration
+
   @moduledoc """
   Methods for accessing lti_1p3 config
   """
@@ -30,16 +33,24 @@ defmodule Lti_1p3.Config do
   Gets the default configurations lti_1p3
   """
   @spec default_config() :: config()
-  def default_config(), do: [
-    http_client: HTTPoison,
-    registration: Lti_1p3.Registration,
+  def default_config(),
+    do: [
+      http_client: HTTPoison,
+      registration: Registration,
+      key_provider: MemoryKeyProvider,
 
-    # login_hints only persist for a day, 86400 seconds = 24 hours
-    login_hint_ttl_sec: 86_400,
+      # login_hints only persist for a day, 86400 seconds = 24 hours
+      login_hint_ttl_sec: 86_400,
 
-    # nonces only persist for a day, 86400 seconds = 24 hours
-    nonce_ttl_sec: 86_400,
-  ]
+      # nonces only persist for a day, 86400 seconds = 24 hours
+      nonce_ttl_sec: 86_400,
+
+      # key provider cache TTL in seconds, 1 hour
+      key_provider_cache_ttl: 3600,
+
+      # key provider refresh interval in seconds, 30 minutes
+      key_provider_refresh_interval: 1800
+    ]
 
   @doc """
   Gets the environment configuration for key :lti_1p3 in app's environment
@@ -69,7 +80,8 @@ defmodule Lti_1p3.Config do
   """
   @spec http_client!() :: atom()
   def http_client!() do
-    get(:http_client) || raise ConfigError, message: "No `:http_client` configuration option found."
+    get(:http_client) ||
+      raise ConfigError, message: "No `:http_client` configuration option found."
   end
 
   @doc """
@@ -80,4 +92,12 @@ defmodule Lti_1p3.Config do
     get(:user) || raise ConfigError, message: "No `:user` configuration option found."
   end
 
+  @doc """
+  Retrieves the key_provider module from the config, or raises an exception.
+  """
+  @spec key_provider!() :: atom()
+  def key_provider!() do
+    get(:key_provider) ||
+      raise ConfigError, message: "No `:key_provider` configuration option found."
+  end
 end

@@ -16,7 +16,7 @@ The package can be installed by adding `lti_1p3` to your list of dependencies in
 ```elixir
 def deps do
   [
-    {:lti_1p3, "~> 0.9"}
+    {:lti_1p3, "~> 0.10"}
   ]
 end
 ```
@@ -42,6 +42,29 @@ config :lti_1p3,
 ```
 
 The provider configured here is the default in-memory persistence provider which means any registrations or deployments created will be lost when your app is stopped or restarted. To persist data across restarts you will need to specify a durable provider such as the [EctoProvider](https://github.com/Simon-Initiative/lti_1p3_ecto_provider) or implement a custom data provider using the DataProvider behavior. Refer to the [Data Providers](#data-providers) section below for more details.
+
+### Key Provider Setup
+
+**Important**: Starting with version 1.0, you must add the key provider supervisor to your application's supervision tree. This manages the caching and refreshing of platform public keys.
+
+Add this to your `application.ex`:
+
+```elixir
+defmodule MyApp.Application do
+  use Application
+
+  def start(_type, _args) do
+    children = [
+      # ... your other children
+      Lti_1p3.Examples.KeyProviderConfig.child_spec()
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_one, name: MyApp.Supervisor)
+  end
+end
+```
+
+The key provider system provides intelligent caching of platform public keys with automatic refresh capabilities. For more details, see the [Key Provider System Documentation](./docs/key_provider_system.md).
 
 ### Jwk
 

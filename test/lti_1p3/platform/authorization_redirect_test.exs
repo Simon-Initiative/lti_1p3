@@ -12,7 +12,20 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
   alias Lti_1p3.Platform.PlatformInstance
 
   # Make sure mocks are verified when the test exits
-  setup [:create_active_jwk, :verify_on_exit!]
+  setup [:create_active_jwk, :setup_key_provider, :verify_on_exit!]
+
+  defp setup_key_provider(_context) do
+    # Configure the HTTP client for the key provider
+    Application.put_env(:lti_1p3, :http_client, MockHTTPoison)
+
+    # Start the key provider for JWT validation
+    {:ok, _pid} = Lti_1p3.KeyProviders.MemoryKeyProvider.start_link([])
+
+    # Allow the test process to use the mock
+    Mox.allow(MockHTTPoison, self(), Lti_1p3.KeyProviders.MemoryKeyProvider)
+
+    :ok
+  end
 
   describe "authorize_redirect" do
     test "authorizes a valid redirect request" do
@@ -39,6 +52,7 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
       # validate the id_token returned is signed correctly
       {:ok, active_jwk} = provider!().get_active_jwk()
 
+      # Mock the HTTP request that the key provider will make
       MockHTTPoison
       |> expect(:get, fn _url -> mock_get_jwk_keys(active_jwk) end)
 

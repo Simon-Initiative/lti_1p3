@@ -8,6 +8,37 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
 
   # Make sure mocks are verified when the test exits
   setup :verify_on_exit!
+  setup :set_mox_from_context
+
+  setup do
+    # Start the key provider supervisor for each test
+    {:ok, supervisor_pid} =
+      Lti_1p3.KeyProviderSupervisor.start_link(
+        key_provider: Lti_1p3.KeyProviders.MemoryKeyProvider,
+        # Disable automatic refresh for tests
+        refresh_interval: 0
+      )
+
+    # Get the child process (MemoryKeyProvider) and allow it to use the mock
+    [
+      {Lti_1p3.KeyProviders.MemoryKeyProvider, child_pid, :worker,
+       [Lti_1p3.KeyProviders.MemoryKeyProvider]}
+    ] =
+      Supervisor.which_children(supervisor_pid)
+
+    Mox.allow(MockHTTPoison, self(), child_pid)
+
+    # Clear key cache before each test to ensure clean state
+    Lti_1p3.KeyProviders.MemoryKeyProvider.clear_cache()
+
+    on_exit(fn ->
+      if Process.alive?(supervisor_pid) do
+        Process.exit(supervisor_pid, :normal)
+      end
+    end)
+
+    :ok
+  end
 
   describe "launch validation" do
     setup do
@@ -353,10 +384,7 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
     # passes on first attempt with a given nonce
     assert {:ok, _jwt_body} = LaunchValidation.validate(params, session_state)
 
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
-
-    # fails on second attempt with a duplicate nonce
+    # fails on second attempt with a duplicate nonce (no HTTP call needed due to caching)
     assert LaunchValidation.validate(params, session_state) ==
              {:error, %{reason: :invalid_nonce, msg: "Duplicate nonce"}}
   end
