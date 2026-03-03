@@ -1,0 +1,4 @@
+interface:
+  display_name: "Software Developer"
+  short_description: "Implement features or diagnose and fix bugs with senior rigor."
+  default_prompt: "Implement this feature package end-to-end, or analyze this bug and deliver a targeted fix plan and patch."
