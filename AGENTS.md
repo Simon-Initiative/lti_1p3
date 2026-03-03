@@ -36,12 +36,19 @@
 
 ## Engineering Workflow
 
-1. Confirm scope and affected LTI surface area (Tool, Platform, shared security, provider contracts).
-2. Read the relevant behavior contracts before modifying implementations.
-3. Implement minimal, targeted changes with explicit error tuples.
-4. Add/update tests in `test/lti_1p3/**` for success and failure paths.
-5. Run formatting and tests before finalizing.
-6. Update docs (`README.md` and/or `docs/*.md`) when behavior changes.
+1. Create feature architecture docs under `docs/features/<feature-slug>/`:
+   - `prd.md`
+   - `fdd.md`
+   - `plan.md`
+2. Treat phases in `plan.md` as cohesive functional slices and execute them in order.
+3. If the feature is too large for one PR, group one or more sequential phases into PR groups that can be delivered independently.
+4. During implementation, update `plan.md` checkboxes as tasks/phases are completed.
+5. Keep the final phase as manual QA acceptance testing before feature completion.
+6. Confirm scope and affected LTI surface area (Tool, Platform, shared security, provider contracts).
+7. Read relevant behavior contracts before modifying implementations.
+8. Add/update tests in `test/lti_1p3/**` for success and failure paths.
+9. Run formatting and tests before finalizing.
+10. Update docs (`README.md` and/or `docs/*.md`) when behavior changes.
 
 ## Coding Style Guidelines
 

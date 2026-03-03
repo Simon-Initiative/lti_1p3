@@ -13,6 +13,7 @@ Choose one mode based on input:
 
 1. Feature Implementation Mode
 - Trigger when the user provides feature artifacts (`prd.md`, `fdd.md`, `plan.md`) or asks for end-to-end implementation.
+- Prefer loading these from `docs/features/<feature-slug>/`.
 - Read [references/feature-execution.md](references/feature-execution.md).
 
 2. Bug Fix Mode
@@ -27,14 +28,17 @@ Choose one mode based on input:
 - Surface contradictions or missing requirements early.
 
 2. Execute end-to-end
-- Implement phase-by-phase in dependency order.
+- Implement phase-by-phase in the order defined by `plan.md`.
+- Treat each phase as a cohesive set of functionality and complete it before moving to the next phase.
+- If `plan.md` includes PR groups, deliver phases according to that grouping while preserving phase order.
 - Keep changes minimal but complete for each phase.
 - Maintain existing code style and architecture conventions.
 
 3. Validate and close
 - Run relevant tests and linters.
 - Confirm acceptance criteria are met.
-- Update progress tracking checkboxes in `plan.md` for completed tasks.
+- Update progress tracking checkboxes in `plan.md` for completed tasks and phases.
+- Ensure the final phase (manual QA acceptance testing) is executed and recorded.
 
 ## Bug Fix Mode
 
