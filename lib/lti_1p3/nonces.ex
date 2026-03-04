@@ -24,7 +24,8 @@ defmodule Lti_1p3.Nonces do
       iex> create_nonce("value", "domain")
       {:error, %Lti_1p3.DataProviderError{}}
   """
-  def create_nonce(value, domain \\ nil), do: provider!().create_nonce(%Nonce{value: value, domain: domain})
+  def create_nonce(value, domain \\ nil),
+    do: provider!().create_nonce(%Nonce{value: value, domain: domain})
 
   @doc """
   Removes all nonces older than the configured @max_nonce_ttl_sec value
@@ -37,5 +38,4 @@ defmodule Lti_1p3.Nonces do
 
     Logger.info("Nonce cleanup complete.")
   end
-
 end

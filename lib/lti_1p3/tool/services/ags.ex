@@ -26,9 +26,14 @@ defmodule Lti_1p3.Tool.Services.AGS do
 
     body = score |> Jason.encode!()
 
-    case http_client!().post(build_url_with_path(line_item.id, "scores"), body, score_headers(access_token)) do
+    case http_client!().post(
+           build_url_with_path(line_item.id, "scores"),
+           body,
+           score_headers(access_token)
+         ) do
       {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] ->
         {:ok, body}
+
       e ->
         Logger.error(
           "Error encountered posting score for user #{score.userId} for line item '#{line_item.label}' #{inspect(e)}"
@@ -59,7 +64,9 @@ defmodule Lti_1p3.Tool.Services.AGS do
     # here as a Torus "resource_id" is strictly coincidence.
 
     prefixed_resource_id = LineItem.to_resource_id(resource_id)
-    request_url = build_url_with_params(line_items_service_url, "resource_id=#{prefixed_resource_id}&limit=1")
+
+    request_url =
+      build_url_with_params(line_items_service_url, "resource_id=#{prefixed_resource_id}&limit=1")
 
     Logger.info("fetch_or_create_line_item: URL #{request_url}")
 
@@ -81,8 +88,9 @@ defmodule Lti_1p3.Tool.Services.AGS do
         # it is important to match against a possible array of items, in case an LMS does
         # not properly support the limit parameter
         [raw_line_item | _] ->
-
-          Logger.info("fetch_or_create_line_item: Retrieved raw line item #{inspect(raw_line_item)} for #{resource_id} #{label}")
+          Logger.info(
+            "fetch_or_create_line_item: Retrieved raw line item #{inspect(raw_line_item)} for #{resource_id} #{label}"
+          )
 
           line_item = to_line_item(raw_line_item)
 
@@ -240,7 +248,9 @@ defmodule Lti_1p3.Tool.Services.AGS do
   end
 
   defp get_line_items_domain(%{line_items_service_domain: domain}, default)
-    when is_nil(domain) or domain == "", do: default
+       when is_nil(domain) or domain == "",
+       do: default
+
   defp get_line_items_domain(%{line_items_service_domain: domain}, _default), do: domain
   defp get_line_items_domain(_registration, default), do: default
 
@@ -275,8 +285,8 @@ defmodule Lti_1p3.Tool.Services.AGS do
   end
 
   defp score_headers(%AccessToken{} = access_token) do
-    [{"Content-Type", "application/vnd.ims.lis.v1.score+json"}]
-      ++ access_token_header(access_token.access_token)
+    [{"Content-Type", "application/vnd.ims.lis.v1.score+json"}] ++
+      access_token_header(access_token.access_token)
   end
 
   defp access_token_header(access_token),

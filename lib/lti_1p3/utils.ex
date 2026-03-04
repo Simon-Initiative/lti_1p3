@@ -115,14 +115,27 @@ defmodule Lti_1p3.Utils do
   end
 
   def validate_audience(jwt, audience) do
-    audience_claims = String.split(jwt["aud"], ",", trim: true)
+    audience_claim = jwt["aud"]
 
-    if audience_claims in audience do
+    valid? =
+      cond do
+        is_binary(audience_claim) ->
+          audience_claim == audience
+
+        is_list(audience_claim) ->
+          audience in audience_claim or
+            (length(audience_claim) > 1 and Map.get(jwt, "azp") == audience)
+
+        true ->
+          false
+      end
+
+    if valid? do
       {:ok}
     else
       {:error,
        %{
-         reason: :invalid_issuer,
+         reason: :invalid_audience,
          msg: "Audience ('aud' claim) in JWT doesn't contain the expected audience"
        }}
     end

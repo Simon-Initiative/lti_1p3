@@ -61,5 +61,32 @@ defmodule Lti_1p3.ToolTest do
       assert Lti_1p3.Tool.get_registration_deployment(issuer, client_id, deployment_id) ==
                {registration, deployment}
     end
+
+    test "login_redirect returns normalized payload" do
+      jwk = jwk_fixture()
+
+      registration_fixture(%{
+        issuer: "https://lti-ri.imsglobal.org",
+        client_id: "12345",
+        key_set_url: "some key_set_url",
+        auth_token_url: "some auth_token_url",
+        auth_login_url: "https://platform.example.com/oidc",
+        auth_server: "some auth_aud",
+        tool_jwk_id: jwk.id
+      })
+
+      params = %{
+        "iss" => "https://lti-ri.imsglobal.org",
+        "client_id" => "12345",
+        "login_hint" => "login-hint",
+        "target_link_uri" => "https://tool.example.com/launch"
+      }
+
+      assert {:ok, %{state: state, redirect_url: redirect_url}} =
+               Lti_1p3.Tool.login_redirect(params)
+
+      assert is_binary(state)
+      assert String.starts_with?(redirect_url, "https://platform.example.com/oidc?")
+    end
   end
 end

@@ -1,145 +1,161 @@
 defmodule Lti_1p3.Tool.LaunchValidation do
-  import Lti_1p3.Config
-  import Lti_1p3.Utils
+  @moduledoc """
+  Stage-based LTI launch validation pipeline.
+  """
 
-  @message_validators [
-    Lti_1p3.Tool.MessageValidators.ResourceMessageValidator
-  ]
+  alias Lti_1p3.Core.Telemetry
+  alias Lti_1p3.Core.Validation.Deployment
+  alias Lti_1p3.Core.Validation.Jwt
+  alias Lti_1p3.Core.Validation.Message
+  alias Lti_1p3.Core.Validation.Nonce
+  alias Lti_1p3.Core.Validation.Registration
+  alias Lti_1p3.Core.Validation.State
+  alias Lti_1p3.Core.Validation.Timestamps
+  alias Lti_1p3.Tool.Launch
 
-  @type params() :: %{state: binary(), id_token: binary()}
-  @type validate_opts() :: []
+  @type params() :: %{optional(String.t()) => String.t()}
+  @type validate_opts() :: [raw_claims: boolean(), correlation_id: String.t()]
 
   @doc """
-  Validates an incoming LTI 1.3 launch and returns the claims if successful.
+  Validates an incoming LTI 1.3 launch and returns a normalized launch struct.
   """
-  @spec validate(params(), validate_opts()) ::
-          {:ok, any()} | {:error, %{optional(atom()) => any(), reason: atom(), msg: String.t()}}
-  def validate(params, session_state, _opts \\ []) do
-    with {:ok} <- validate_oidc_state(params, session_state),
-         {:ok, registration} <- validate_registration(params),
-         {:ok, key_set_url} <- registration_key_set_url(registration),
-         {:ok, id_token} <- extract_param(params, "id_token"),
-         {:ok, jwt_body} <- validate_jwt_signature(id_token, key_set_url),
-         {:ok} <- validate_timestamps(jwt_body),
-         {:ok} <- validate_deployment(registration, jwt_body),
-         {:ok} <- validate_message(jwt_body),
-         {:ok} <- validate_nonce(jwt_body, "validate_launch"),
-         claims <- jwt_body do
-      {:ok, claims}
+  @spec validate(params(), String.t() | nil, validate_opts()) ::
+          {:ok, Launch.t()}
+          | {:error, %{reason: atom(), stage: atom(), msg: String.t(), details: map()}}
+  def validate(params, session_state, opts \\ []) do
+    correlation_id = Keyword.get(opts, :correlation_id, UUID.uuid4())
+
+    with :ok <- validate_state(session_state, params, correlation_id),
+         {:ok, registration, _peeked_claims} <- resolve_registration(params, correlation_id),
+         {:ok, id_token} <- fetch_id_token(params),
+         {:ok, claims} <- validate_jwt(id_token, registration, correlation_id),
+         :ok <- validate_timestamps(claims, correlation_id),
+         {:ok, deployment_id} <- validate_deployment(registration, claims, correlation_id),
+         {:ok, _message_type} <- validate_message(claims, correlation_id),
+         :ok <- validate_nonce(claims, correlation_id) do
+      launch = Launch.new(registration, claims, opts)
+      Telemetry.emit_outcome(:ok, %{flow: :tool_launch, correlation_id: correlation_id})
+      {:ok, %{launch | deployment_id: deployment_id}}
+    else
+      {:error, error} = result ->
+        Telemetry.emit_outcome(:error, %{
+          flow: :tool_launch,
+          correlation_id: correlation_id,
+          reason: error.reason,
+          stage: error.stage
+        })
+
+        result
     end
   end
 
-  # Validate that the state sent with an OIDC launch matches the state that was sent in the OIDC response
-  # returns a boolean on whether it is valid or not
-  defp validate_oidc_state(params, session_state) do
-    case session_state do
+  defp validate_state(session_state, params, correlation_id) do
+    case State.validate(session_state, Map.get(params, "state")) do
+      :ok ->
+        emit_stage_ok(:state, correlation_id)
+        :ok
+
+      {:error, error} ->
+        emit_stage_error(:state, error, correlation_id)
+    end
+  end
+
+  defp resolve_registration(params, correlation_id) do
+    case Registration.resolve(params) do
+      {:ok, registration, peeked_claims} ->
+        emit_stage_ok(:registration, correlation_id)
+        {:ok, registration, peeked_claims}
+
+      {:error, error} ->
+        emit_stage_error(:registration, error, correlation_id)
+    end
+  end
+
+  defp validate_jwt(id_token, registration, correlation_id) do
+    case Jwt.validate(id_token, registration) do
+      {:ok, claims} ->
+        emit_stage_ok(:jwt, correlation_id)
+        {:ok, claims}
+
+      {:error, error} ->
+        emit_stage_error(:jwt, error, correlation_id)
+    end
+  end
+
+  defp validate_timestamps(claims, correlation_id) do
+    case Timestamps.validate(claims) do
+      :ok ->
+        emit_stage_ok(:timestamps, correlation_id)
+        :ok
+
+      {:error, error} ->
+        emit_stage_error(:timestamps, error, correlation_id)
+    end
+  end
+
+  defp validate_deployment(registration, claims, correlation_id) do
+    case Deployment.validate(registration, claims) do
+      {:ok, deployment_id} ->
+        emit_stage_ok(:deployment, correlation_id)
+        {:ok, deployment_id}
+
+      {:error, error} ->
+        emit_stage_error(:deployment, error, correlation_id)
+    end
+  end
+
+  defp validate_message(claims, correlation_id) do
+    case Message.validate(claims) do
+      {:ok, message_type} ->
+        emit_stage_ok(:message, correlation_id)
+        {:ok, message_type}
+
+      {:error, error} ->
+        emit_stage_error(:message, error, correlation_id)
+    end
+  end
+
+  defp validate_nonce(claims, correlation_id) do
+    case Nonce.validate(claims, "validate_launch") do
+      :ok ->
+        emit_stage_ok(:nonce, correlation_id)
+        :ok
+
+      {:error, error} ->
+        emit_stage_error(:nonce, error, correlation_id)
+    end
+  end
+
+  defp fetch_id_token(params) do
+    case Map.get(params, "id_token") do
       nil ->
-        {:error,
-         %{
-           reason: :invalid_oidc_state,
-           msg:
-             "State from session is missing. Make sure cookies are enabled and configured correctly"
-         }}
+        {:error, %{reason: :missing_param, stage: :jwt, msg: "Missing id_token", details: %{}}}
 
-      session_state ->
-        case params["state"] do
-          nil ->
-            {:error, %{reason: :invalid_oidc_state, msg: "State from OIDC request is missing"}}
-
-          request_state ->
-            if request_state == session_state do
-              {:ok}
-            else
-              {:error,
-               %{
-                 reason: :invalid_oidc_state,
-                 msg: "State from OIDC request does not match session"
-               }}
-            end
-        end
+      id_token ->
+        {:ok, id_token}
     end
   end
 
-  defp validate_registration(params) do
-    with {:ok, issuer, client_id} <- peek_issuer_client_id(params) do
-      case provider!().get_registration_by_issuer_client_id(issuer, client_id) do
-        nil ->
-          {:error,
-           %{
-             reason: :invalid_registration,
-             msg:
-               "Registration with issuer \"#{issuer}\" and client id \"#{client_id}\" not found",
-             issuer: issuer,
-             client_id: client_id
-           }}
-
-        registration ->
-          {:ok, registration}
-      end
-    end
+  defp emit_stage_ok(stage, correlation_id) do
+    Telemetry.emit_stage(stage, :ok, %{flow: :tool_launch, correlation_id: correlation_id})
   end
 
-  defp peek_issuer_client_id(params) do
-    with {:ok, jwt_string} <- extract_param(params, "id_token"),
-         {:ok, jwt_claims} <- peek_claims(jwt_string) do
-      {:ok, jwt_claims["iss"], peek_client_id(jwt_claims["aud"])}
-    end
+  defp emit_stage_error(stage, error, correlation_id) do
+    error = ensure_error_shape(error, stage)
+
+    Telemetry.emit_stage(stage, :error, %{
+      flow: :tool_launch,
+      correlation_id: correlation_id,
+      reason: error.reason,
+      stage: error.stage
+    })
+
+    {:error, error}
   end
 
-  defp peek_client_id([client_id | _]), do: client_id
-  defp peek_client_id(client_id), do: client_id
-
-  defp validate_deployment(registration, jwt_body) do
-    deployment_id = jwt_body["https://purl.imsglobal.org/spec/lti/claim/deployment_id"]
-    deployment = provider!().get_deployment(registration, deployment_id)
-
-    case deployment do
-      nil ->
-        {:error,
-         %{
-           reason: :invalid_deployment,
-           msg: "Deployment with id \"#{deployment_id}\" not found",
-           registration_id: registration.id,
-           deployment_id: deployment_id
-         }}
-
-      _deployment ->
-        {:ok}
-    end
-  end
-
-  defp validate_message(jwt_body) do
-    case jwt_body["https://purl.imsglobal.org/spec/lti/claim/message_type"] do
-      nil ->
-        {:error, %{reason: :invalid_message_type, msg: "Missing message type"}}
-
-      message_type ->
-        # no more than one message validator should apply for a given mesage,
-        # so use the first validator we find that applies
-        validation_result =
-          case Enum.find(@message_validators, fn mv -> mv.can_validate(jwt_body) end) do
-            nil -> nil
-            validator -> validator.validate(jwt_body)
-          end
-
-        case validation_result do
-          nil ->
-            {:error,
-             %{
-               reason: :invalid_message_type,
-               msg: "Invalid or unsupported message type \"#{message_type}\""
-             }}
-
-          {:error, error} ->
-            {:error,
-             %{
-               reason: :invalid_message,
-               msg: "Message validation failed: (\"#{message_type}\") #{error}"
-             }}
-
-          _ ->
-            {:ok}
-        end
-    end
+  defp ensure_error_shape(error, stage) do
+    error
+    |> Map.put_new(:stage, stage)
+    |> Map.put_new(:details, %{})
   end
 end

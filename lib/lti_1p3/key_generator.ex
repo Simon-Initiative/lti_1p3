@@ -1,13 +1,13 @@
 defmodule Lti_1p3.KeyGenerator do
-
-  @chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" |> String.split("", trim: true)
+  @chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+         |> String.split("", trim: true)
 
   @doc """
   Create a random passphrase of size given (defaults to 256)
   """
   def passphrase(len \\ 256) do
-    Enum.map((1..len), fn _i -> Enum.random(@chars) end)
-      |> Enum.join("")
+    Enum.map(1..len, fn _i -> Enum.random(@chars) end)
+    |> Enum.join("")
   end
 
   @doc """

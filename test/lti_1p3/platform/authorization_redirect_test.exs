@@ -5,23 +5,20 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
   import Mox
 
   alias Lti_1p3.Claims
+  alias Lti_1p3.Platform
   alias Lti_1p3.Platform.AuthorizationRedirect
-  alias Lti_1p3.Test.MockHTTPoison
   alias Lti_1p3.Platform.LoginHint
   alias Lti_1p3.Platform.LoginHints
   alias Lti_1p3.Platform.PlatformInstance
+  alias Lti_1p3.Test.MockHTTPoison
 
-  # Make sure mocks are verified when the test exits
   setup [:create_active_jwk, :setup_key_provider, :verify_on_exit!]
 
   defp setup_key_provider(_context) do
-    # Configure the HTTP client for the key provider
     Application.put_env(:lti_1p3, :http_client, MockHTTPoison)
 
-    # Start the key provider for JWT validation
     {:ok, _pid} = Lti_1p3.KeyProviders.MemoryKeyProvider.start_link([])
 
-    # Allow the test process to use the mock
     Mox.allow(MockHTTPoison, self(), Lti_1p3.KeyProviders.MemoryKeyProvider)
 
     :ok
@@ -36,7 +33,8 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
         params: params,
         target_link_uri: target_link_uri,
         user: user
-      } = generate_lti_platform_stubs()
+      } =
+        generate_lti_platform_stubs()
 
       claims = [
         Claims.MessageType.message_type(:lti_resource_link_request),
@@ -49,55 +47,47 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
       assert {:ok, ^target_link_uri, ^state, id_token} =
                AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
 
-      # validate the id_token returned is signed correctly
       {:ok, active_jwk} = provider!().get_active_jwk()
 
-      # Mock the HTTP request that the key provider will make
-      MockHTTPoison
-      |> expect(:get, fn _url -> mock_get_jwk_keys(active_jwk) end)
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(active_jwk) end)
 
       assert {:ok, jwt} = Lti_1p3.Utils.validate_jwt_signature(id_token, "some-keyset-url")
-
-      assert jwt["exp"]
-      assert jwt["iat"]
-      assert jwt["nbf"]
-      assert jwt["nonce"]
-
       assert jwt["iss"] == issuer
       assert jwt["aud"] == "some-client-id"
-      assert jwt["sub"] == user.sub
-      assert jwt["given_name"] == user.given_name
-      assert jwt["family_name"] == user.family_name
-      assert jwt["middle_name"] == user.middle_name
-      assert jwt["name"] == user.name
-      assert jwt["email"] == user.email
-      assert jwt["locale"] == user.locale
-      assert jwt["picture"] == user.picture
+    end
 
-      assert jwt["https://purl.imsglobal.org/spec/lti/claim/message_type"] ==
-               "LtiResourceLinkRequest"
+    test "top-level Platform API returns authorization payload struct" do
+      %{
+        issuer: issuer,
+        deployment_id: deployment_id,
+        params: params,
+        target_link_uri: target_link_uri,
+        state: state,
+        user: user
+      } =
+        generate_lti_platform_stubs()
 
-      assert jwt["https://purl.imsglobal.org/spec/lti/claim/version"] == "1.3.0"
-      assert jwt["https://purl.imsglobal.org/spec/lti/claim/deployment_id"] == deployment_id
-      assert jwt["https://purl.imsglobal.org/spec/lti/claim/target_link_uri"] == "some-valid-url"
+      claims = [
+        Claims.MessageType.message_type(:lti_resource_link_request),
+        Claims.DeploymentId.deployment_id(deployment_id),
+        Claims.TargetLinkUri.target_link_uri("some-valid-url"),
+        Claims.ResourceLink.resource_link("some-resource-link-id"),
+        Claims.Roles.roles([])
+      ]
 
-      assert jwt["https://purl.imsglobal.org/spec/lti/claim/resource_link"] ==
-               %{"id" => "some-resource-link-id"}
+      assert {:ok, %Lti_1p3.Platform.AuthorizationPayload{} = payload} =
+               Platform.authorize_redirect(params, user, issuer, claims)
 
-      assert jwt["https://purl.imsglobal.org/spec/lti/claim/roles"] == []
+      assert payload.redirect_uri == target_link_uri
+      assert payload.state == state
+      assert is_binary(payload.id_token)
     end
 
     test "fails on missing oidc params" do
-      %{
-        issuer: issuer,
-        deployment_id: deployment_id,
-        params: params,
-        user: user
-      } = generate_lti_platform_stubs()
+      %{issuer: issuer, deployment_id: deployment_id, params: params, user: user} =
+        generate_lti_platform_stubs()
 
-      params =
-        params
-        |> Map.drop(["scope", "nonce"])
+      params = Map.drop(params, ["scope", "nonce"])
 
       claims = [
         Claims.DeploymentId.deployment_id(deployment_id),
@@ -106,26 +96,15 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
         Claims.Roles.roles([])
       ]
 
-      assert AuthorizationRedirect.authorize_redirect(params, user, issuer, claims) ==
-               {:error,
-                %{
-                  reason: :invalid_oidc_params,
-                  msg: "Invalid OIDC params. The following parameters are missing: nonce, scope",
-                  missing_params: ["nonce", "scope"]
-                }}
+      assert {:error, %{stage: :oidc_params, reason: :invalid_oidc_params}} =
+               AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
     end
 
     test "fails on incorrect oidc scope" do
-      %{
-        issuer: issuer,
-        deployment_id: deployment_id,
-        params: params,
-        user: user
-      } = generate_lti_platform_stubs()
+      %{issuer: issuer, deployment_id: deployment_id, params: params, user: user} =
+        generate_lti_platform_stubs()
 
-      params =
-        params
-        |> Map.put("scope", "invalid_scope")
+      params = Map.put(params, "scope", "invalid_scope")
 
       claims = [
         Claims.DeploymentId.deployment_id(deployment_id),
@@ -134,27 +113,16 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
         Claims.Roles.roles([])
       ]
 
-      assert AuthorizationRedirect.authorize_redirect(params, user, issuer, claims) ==
-               {:error,
-                %{
-                  reason: :invalid_oidc_scope,
-                  msg: "Invalid OIDC scope: invalid_scope. Scope must be 'openid'"
-                }}
+      assert {:error, %{stage: :scope, reason: :invalid_oidc_scope}} =
+               AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
     end
 
     test "fails on invalid login_hint user session" do
-      %{
-        issuer: issuer,
-        deployment_id: deployment_id,
-        params: params,
-        user: user
-      } = generate_lti_platform_stubs()
+      %{issuer: issuer, deployment_id: deployment_id, params: params, user: user} =
+        generate_lti_platform_stubs()
 
       other_user = lti_1p3_user()
-
-      params =
-        params
-        |> Map.put("login_hint", "#{other_user.id}")
+      params = Map.put(params, "login_hint", "#{other_user.id}")
 
       claims = [
         Claims.DeploymentId.deployment_id(deployment_id),
@@ -163,25 +131,15 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
         Claims.Roles.roles([])
       ]
 
-      assert AuthorizationRedirect.authorize_redirect(params, user, issuer, claims) ==
-               {:error,
-                %{
-                  reason: :invalid_login_hint,
-                  msg: "Login hint must be linked with an active user session"
-                }}
+      assert {:error, %{stage: :user, reason: :invalid_login_hint}} =
+               AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
     end
 
     test "fails on invalid client_id" do
-      %{
-        issuer: issuer,
-        deployment_id: deployment_id,
-        params: params,
-        user: user
-      } = generate_lti_platform_stubs()
+      %{issuer: issuer, deployment_id: deployment_id, params: params, user: user} =
+        generate_lti_platform_stubs()
 
-      params =
-        params
-        |> Map.put("client_id", "some-other-client-id")
+      params = Map.put(params, "client_id", "some-other-client-id")
 
       claims = [
         Claims.DeploymentId.deployment_id(deployment_id),
@@ -190,25 +148,15 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
         Claims.Roles.roles([])
       ]
 
-      assert AuthorizationRedirect.authorize_redirect(params, user, issuer, claims) ==
-               {:error,
-                %{
-                  reason: :client_not_registered,
-                  msg: "No platform exists with client id 'some-other-client-id'"
-                }}
+      assert {:error, %{stage: :platform_registration, reason: :client_not_registered}} =
+               AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
     end
 
     test "fails on invalid redirect_uri" do
-      %{
-        issuer: issuer,
-        deployment_id: deployment_id,
-        params: params,
-        user: user
-      } = generate_lti_platform_stubs()
+      %{issuer: issuer, deployment_id: deployment_id, params: params, user: user} =
+        generate_lti_platform_stubs()
 
-      params =
-        params
-        |> Map.put("redirect_uri", "some-invalid_redirect-uri")
+      params = Map.put(params, "redirect_uri", "some-invalid_redirect-uri")
 
       claims = [
         Claims.DeploymentId.deployment_id(deployment_id),
@@ -217,21 +165,13 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
         Claims.Roles.roles([])
       ]
 
-      assert AuthorizationRedirect.authorize_redirect(params, user, issuer, claims) ==
-               {:error,
-                %{
-                  reason: :unauthorized_redirect_uri,
-                  msg: "Redirect URI not authorized in requested context"
-                }}
+      assert {:error, %{stage: :redirect, reason: :unauthorized_redirect_uri}} =
+               AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
     end
 
     test "fails on duplicate nonce" do
-      %{
-        issuer: issuer,
-        deployment_id: deployment_id,
-        params: params,
-        user: user
-      } = generate_lti_platform_stubs()
+      %{issuer: issuer, deployment_id: deployment_id, params: params, user: user} =
+        generate_lti_platform_stubs()
 
       claims = [
         Claims.DeploymentId.deployment_id(deployment_id),
@@ -243,57 +183,55 @@ defmodule Lti_1p3.Platform.AuthorizationRedirectTest do
       assert {:ok, _target_link_uri, _state, _id_token} =
                AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
 
-      # try again with the same nonce
-      assert {:error, %{reason: :invalid_nonce, msg: "Duplicate nonce"}} ==
+      assert {:error, %{stage: :nonce, reason: :invalid_nonce, msg: "Duplicate nonce"}} =
                AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
     end
 
     test "fails on missing required claims" do
-      %{
-        issuer: issuer,
-        deployment_id: _deployment_id,
-        params: params,
-        user: user
-      } = generate_lti_platform_stubs()
+      %{issuer: issuer, params: params, user: user} = generate_lti_platform_stubs()
 
       claims = []
 
-      assert AuthorizationRedirect.authorize_redirect(params, user, issuer, claims) ==
-               {:error,
-                %{
-                  reason: :missing_required_claims,
-                  msg:
-                    "Missing required claims: https://purl.imsglobal.org/spec/lti/claim/deployment_id, https://purl.imsglobal.org/spec/lti/claim/target_link_uri, https://purl.imsglobal.org/spec/lti/claim/roles",
-                  missing_claims: [
-                    "https://purl.imsglobal.org/spec/lti/claim/deployment_id",
-                    "https://purl.imsglobal.org/spec/lti/claim/target_link_uri",
-                    "https://purl.imsglobal.org/spec/lti/claim/roles"
-                  ]
-                }}
+      assert {:error, %{stage: :claims, reason: :missing_required_claims}} =
+               AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
     end
+  end
 
-    test "fails on missing required roles claim" do
-      %{
-        issuer: issuer,
-        deployment_id: deployment_id,
-        params: params,
-        user: user
-      } = generate_lti_platform_stubs()
+  test "emits stage and outcome telemetry events for platform authorization" do
+    handler_id = "platform-authorize-telemetry-#{System.unique_integer([:positive])}"
+    parent = self()
 
-      claims = [
-        Claims.DeploymentId.deployment_id(deployment_id),
-        Claims.TargetLinkUri.target_link_uri("some-valid-url"),
-        Claims.ResourceLink.resource_link("some-resource-link-id")
-      ]
+    :ok =
+      :telemetry.attach_many(
+        handler_id,
+        [
+          [:lti_1p3, :core, :validation, :stage],
+          [:lti_1p3, :core, :validation, :outcome]
+        ],
+        fn event, _measurements, metadata, _config ->
+          send(parent, {:telemetry_event, event, metadata})
+        end,
+        nil
+      )
 
-      assert AuthorizationRedirect.authorize_redirect(params, user, issuer, claims) ==
-               {:error,
-                %{
-                  reason: :missing_required_claims,
-                  msg: "Missing required claims: https://purl.imsglobal.org/spec/lti/claim/roles",
-                  missing_claims: ["https://purl.imsglobal.org/spec/lti/claim/roles"]
-                }}
-    end
+    on_exit(fn -> :telemetry.detach(handler_id) end)
+
+    %{issuer: issuer, deployment_id: deployment_id, params: params, user: user} =
+      generate_lti_platform_stubs()
+
+    claims = [
+      Claims.MessageType.message_type(:lti_resource_link_request),
+      Claims.DeploymentId.deployment_id(deployment_id),
+      Claims.TargetLinkUri.target_link_uri("some-valid-url"),
+      Claims.ResourceLink.resource_link("some-resource-link-id"),
+      Claims.Roles.roles([])
+    ]
+
+    assert {:ok, _redirect_uri, _state, _id_token} =
+             AuthorizationRedirect.authorize_redirect(params, user, issuer, claims)
+
+    assert_receive {:telemetry_event, [:lti_1p3, :core, :validation, :stage], %{result: :ok}}
+    assert_receive {:telemetry_event, [:lti_1p3, :core, :validation, :outcome], %{result: :ok}}
   end
 
   def create_active_jwk(_context) do

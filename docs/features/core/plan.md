@@ -5,61 +5,61 @@
 - Approved core PRD/FDD baseline and audited gap list against current modules.
 
 ### Tasks
-- [ ] Build a core conformance matrix (spec requirement -> current module -> status).
-- [ ] Enumerate breaking API changes and define final target API signatures.
-- [ ] Confirm canonical error map schema and reason atom catalog.
-- [ ] Define provider behavior contract changes and adapter migration expectations.
-- [ ] Build documentation inventory for all public modules/APIs and required guides under `docs/`.
+- [x] Build a core conformance matrix (spec requirement -> current module -> status).
+- [x] Enumerate breaking API changes and define final target API signatures.
+- [x] Confirm canonical error map schema and reason atom catalog.
+- [x] Define provider behavior contract changes and adapter migration expectations.
+- [x] Build documentation inventory for all public modules/APIs and required guides under `docs/`.
 
 ### Verification
-- [ ] Gap matrix reviewed by maintainers.
-- [ ] Target API and error catalog approved.
+- [x] Gap matrix reviewed by maintainers.
+- [x] Target API and error catalog approved.
 
 ## Phase 1 - API Unification and Contract Refactor
 ### Deliverables
 - Unified top-level `Tool` and `Platform` APIs with consistent tuple contracts.
 
 ### Tasks
-- [ ] Implement new `Lti_1p3.Tool` core API functions and migrate call sites.
-- [ ] Implement new `Lti_1p3.Platform` core API functions and migrate call sites.
-- [ ] Introduce shared core error helpers and replace ad-hoc error map creation.
-- [ ] Update behavior contracts and reference memory provider implementation.
-- [ ] Fix naming inconsistencies (including validator path/module naming).
+- [x] Implement new `Lti_1p3.Tool` core API functions and migrate call sites.
+- [x] Implement new `Lti_1p3.Platform` core API functions and migrate call sites.
+- [x] Introduce shared core error helpers and replace ad-hoc error map creation.
+- [x] Update behavior contracts and reference memory provider implementation.
+- [x] Fix naming inconsistencies (including validator path/module naming).
 
 ### Verification
-- [ ] Core unit tests pass with new API contracts.
-- [ ] Provider behavior conformance tests pass.
+- [x] Core unit tests pass with new API contracts.
+- [x] Provider behavior conformance tests pass.
 
 ## Phase 2 - Launch Validation Hardening
 ### Deliverables
 - Fully hardened tool/platform core validation pipelines.
 
 ### Tasks
-- [ ] Refactor validation into stage-based shared modules (state, registration, jwt, timestamps, deployment, nonce, message).
-- [ ] Correct and harden issuer/audience/time validations.
-- [ ] Add launch message dispatcher scaffolding for resource and deep-linking requests.
-- [ ] Ensure algorithm constraints and kid resolution failures are explicit and tested.
-- [ ] Add deterministic failure reason coverage for all negative paths.
+- [x] Refactor validation into stage-based shared modules (state, registration, jwt, timestamps, deployment, nonce, message).
+- [x] Correct and harden issuer/audience/time validations.
+- [x] Add launch message dispatcher scaffolding for resource and deep-linking requests.
+- [x] Ensure algorithm constraints and kid resolution failures are explicit and tested.
+- [x] Add deterministic failure reason coverage for all negative paths.
 
 ### Verification
-- [ ] Security-focused regression suite passes.
-- [ ] Stage-level failure reason assertions pass across test matrix.
+- [x] Security-focused regression suite passes.
+- [x] Stage-level failure reason assertions pass across test matrix.
 
 ## Phase 3 - Observability and Migration Assets
 ### Deliverables
 - Telemetry coverage and migration documentation for integrators.
 
 ### Tasks
-- [ ] Add telemetry events and structured logs for all validation stages.
-- [ ] Add docs for new API usage (tool + platform) and migration guide.
-- [ ] Publish provider adapter migration checklist and sample contract tests.
-- [ ] Update README and docs pages to new API.
-- [ ] Ensure `@moduledoc`, `@doc`, and `@spec` are complete for all public core modules/functions.
+- [x] Add telemetry events and structured logs for all validation stages.
+- [x] Add docs for new API usage (tool + platform) and migration guide.
+- [x] Publish provider adapter migration checklist and sample contract tests.
+- [x] Update README and docs pages to new API.
+- [x] Ensure `@moduledoc`, `@doc`, and `@spec` are complete for all public core modules/functions.
 
 ### Verification
-- [ ] Telemetry assertions validated in tests.
-- [ ] Documentation examples compile in doctests or integration checks.
-- [ ] `mix docs` completes with full public API coverage and required `docs/` guides present.
+- [x] Telemetry assertions validated in tests.
+- [x] Documentation examples compile in doctests or integration checks.
+- [x] `mix docs` completes with full public API coverage and required `docs/` guides present.
 
 ## Phase 4 - Manual QA Acceptance Testing
 ### Deliverables
@@ -68,12 +68,12 @@
 ### Tasks
 - [ ] Execute manual tool launch flow against at least one external LMS sandbox.
 - [ ] Execute manual platform authorization flow against tool sandbox.
-- [ ] Validate failure handling paths (invalid state, nonce replay, wrong deployment, stale token).
-- [ ] Capture QA report with pass/fail and remediation items.
+- [x] Validate failure handling paths (invalid state, nonce replay, wrong deployment, stale token).
+- [x] Capture QA report with pass/fail and remediation items.
 
 ### Verification
 - [ ] Manual QA report approved.
-- [ ] Remaining issues are tracked and triaged.
+- [x] Remaining issues are tracked and triaged.
 
 ## PR Grouping
 - PR Group 1: Phases 0-1
