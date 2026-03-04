@@ -3,9 +3,8 @@ defmodule Lti_1p3.Nonce do
   defstruct [:id, :value, :domain]
 
   @type t() :: %__MODULE__{
-    id: integer(),
-    value: String.t(),
-    domain: String.t(),
-  }
-
+          id: integer(),
+          value: String.t(),
+          domain: String.t()
+        }
 end

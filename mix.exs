@@ -41,6 +41,7 @@ defmodule Lti_1p3.MixProject do
       {:jason, "~> 1.3"},
       {:joken, "~> 2.2.0"},
       {:mox, "~> 0.5", only: :test},
+      {:telemetry, "~> 1.2"},
       {:timex, "~> 3.5"},
       {:uuid, "~> 1.1"}
     ]
@@ -78,7 +79,12 @@ defmodule Lti_1p3.MixProject do
       main: "readme",
       extras: [
         "README.md",
-        "docs/lti_1p3_overview.md"
+        "docs/lti_1p3_overview.md",
+        "docs/core_tool_platform_guide.md",
+        "docs/telemetry.md",
+        "docs/core_migration_guide.md",
+        "docs/provider_adapter_migration.md",
+        "docs/core_troubleshooting.md"
       ],
       groups_for_extras: [
         "LTI 1.3": Path.wildcard("docs/*.md")

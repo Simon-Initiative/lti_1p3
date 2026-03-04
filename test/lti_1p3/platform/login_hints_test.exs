@@ -33,9 +33,15 @@ defmodule Lti_1p3.Platform.LoginHintsTest do
       assert fetched_login_hint == login_hint
 
       # fake the nonce was created a day + 1 hour ago
-      a_day_before = Timex.now |> Timex.subtract(Timex.Duration.from_hours(25))
+      a_day_before = Timex.now() |> Timex.subtract(Timex.Duration.from_hours(25))
+
       Agent.update(MemoryProvider, fn state ->
-        %{state | login_hints: state.login_hints |> Map.put(login_hint.value, Map.put(login_hint, :inserted_at, a_day_before))}
+        %{
+          state
+          | login_hints:
+              state.login_hints
+              |> Map.put(login_hint.value, Map.put(login_hint, :inserted_at, a_day_before))
+        }
       end)
 
       # run cleanup
@@ -50,5 +56,4 @@ defmodule Lti_1p3.Platform.LoginHintsTest do
 
     %{user: user}
   end
-
 end

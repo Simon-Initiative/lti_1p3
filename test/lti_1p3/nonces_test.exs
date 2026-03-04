@@ -31,7 +31,8 @@ defmodule Lti_1p3.NoncesTest do
     test "should fail to create new nonce if one already exists with specified domain" do
       {:ok, _nonce} = Nonces.create_nonce("some-value", "some-domain")
 
-      assert {:error, %Lti_1p3.DataProviderError{msg: "Nonce with value already exists"}} = Nonces.create_nonce("some-value", "some-domain")
+      assert {:error, %Lti_1p3.DataProviderError{msg: "Nonce with value already exists"}} =
+               Nonces.create_nonce("some-value", "some-domain")
     end
 
     test "should cleanup expired nonces" do
@@ -41,9 +42,18 @@ defmodule Lti_1p3.NoncesTest do
       assert Nonces.get_nonce(nonce.value) == nonce
 
       # fake the nonce was created a day + 1 hour ago
-      a_day_before = Timex.now |> Timex.subtract(Timex.Duration.from_hours(25))
+      a_day_before = Timex.now() |> Timex.subtract(Timex.Duration.from_hours(25))
+
       Agent.update(MemoryProvider, fn state ->
-        %{state | nonces: state.nonces |> Map.put(MemoryProvider.nonce_key(nonce), Map.put(nonce, :inserted_at, a_day_before))}
+        %{
+          state
+          | nonces:
+              state.nonces
+              |> Map.put(
+                MemoryProvider.nonce_key(nonce),
+                Map.put(nonce, :inserted_at, a_day_before)
+              )
+        }
       end)
 
       # run cleanup

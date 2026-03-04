@@ -20,14 +20,13 @@ defmodule Lti_1p3.Tool.Registration do
   ]
 
   @type t() :: %__MODULE__{
-    id: integer(),
-    issuer: String.t(),
-    client_id: String.t(),
-    key_set_url: String.t(),
-    auth_token_url: String.t(),
-    auth_login_url: String.t(),
-    auth_server: String.t(),
-    tool_jwk_id: integer()
-  }
-
+          id: integer(),
+          issuer: String.t(),
+          client_id: String.t(),
+          key_set_url: String.t(),
+          auth_token_url: String.t(),
+          auth_login_url: String.t(),
+          auth_server: String.t(),
+          tool_jwk_id: integer()
+        }
 end

@@ -1,6 +1,5 @@
 defmodule Lti_1p3.Config do
   alias Lti_1p3.KeyProviders.MemoryKeyProvider
-  alias Lti_1p3.Registration
 
   @moduledoc """
   Methods for accessing lti_1p3 config
@@ -36,7 +35,6 @@ defmodule Lti_1p3.Config do
   def default_config(),
     do: [
       http_client: HTTPoison,
-      registration: Registration,
       key_provider: MemoryKeyProvider,
 
       # login_hints only persist for a day, 86400 seconds = 24 hours

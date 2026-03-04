@@ -117,33 +117,33 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
       refute AGS.get_line_items_url(%{})
 
       refute AGS.get_line_items_url(%{}, %{
-        line_items_service_domain: @lti_items_service_domain
-      })
+               line_items_service_domain: @lti_items_service_domain
+             })
     end
 
     test "returns the url from line items claim when no registration present" do
       assert AGS.get_line_items_url(@lti_params) ==
-        @line_items_url
+               @line_items_url
     end
 
     test "returns the url from line items claim when registration present but not line_items_service_domain" do
       assert AGS.get_line_items_url(@lti_params, %{
-        auth_server: "some auth_server"
-      }) == @line_items_url
+               auth_server: "some auth_server"
+             }) == @line_items_url
 
       assert AGS.get_line_items_url(@lti_params, %{
-        line_items_service_domain: ""
-      }) == @line_items_url
+               line_items_service_domain: ""
+             }) == @line_items_url
 
       assert AGS.get_line_items_url(@lti_params, %{
-        line_items_service_domain: nil
-      }) == @line_items_url
+               line_items_service_domain: nil
+             }) == @line_items_url
     end
 
     test "returns the url from line items claim with the registration line_items_service_domain" do
       assert AGS.get_line_items_url(@lti_params, %{
-        line_items_service_domain: @lti_items_service_domain
-      }) == "https://registration.example.com/api/lti/courses/8/line_items"
+               line_items_service_domain: @lti_items_service_domain
+             }) == "https://registration.example.com/api/lti/courses/8/line_items"
     end
   end
 
@@ -245,9 +245,9 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     } do
       expect(MockHTTPoison, :post, fn _url, _body, headers ->
         assert [
-          {"Content-Type", "application/vnd.ims.lis.v1.score+json"},
-          {"Authorization", "Bearer fake_token"}
-        ] == headers
+                 {"Content-Type", "application/vnd.ims.lis.v1.score+json"},
+                 {"Authorization", "Bearer fake_token"}
+               ] == headers
 
         {:ok, %HTTPoison.Response{status_code: 200, body: ""}}
       end)
@@ -260,10 +260,10 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     } do
       expect(MockHTTPoison, :get, fn _url, headers ->
         assert [
-          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
-          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
-          {"Authorization", "Bearer fake_token"}
-        ] == headers
+                 {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+                 {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+                 {"Authorization", "Bearer fake_token"}
+               ] == headers
 
         {:ok, %HTTPoison.Response{status_code: 200, body: "[]"}}
       end)
@@ -281,10 +281,10 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     } do
       expect(MockHTTPoison, :post, fn _url, _body, headers ->
         assert [
-          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
-          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
-          {"Authorization", "Bearer fake_token"}
-        ] == headers
+                 {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+                 {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+                 {"Authorization", "Bearer fake_token"}
+               ] == headers
 
         {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
       end)
@@ -305,10 +305,10 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     } do
       expect(MockHTTPoison, :put, fn _url, _body, headers ->
         assert [
-          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
-          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
-          {"Authorization", "Bearer fake_token"}
-        ] == headers
+                 {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+                 {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+                 {"Authorization", "Bearer fake_token"}
+               ] == headers
 
         {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
       end)
@@ -328,20 +328,20 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     } do
       expect(MockHTTPoison, :post, fn _url, _body, headers ->
         assert [
-          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
-          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
-          {"Authorization", "Bearer fake_token"}
-        ] == headers
+                 {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+                 {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+                 {"Authorization", "Bearer fake_token"}
+               ] == headers
 
         {:ok, %HTTPoison.Response{status_code: 200, body: "{}"}}
       end)
 
       expect(MockHTTPoison, :get, fn _url, headers ->
         assert [
-          {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
-          {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
-          {"Authorization", "Bearer fake_token"}
-        ] == headers
+                 {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
+                 {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"},
+                 {"Authorization", "Bearer fake_token"}
+               ] == headers
 
         {:ok, %HTTPoison.Response{status_code: 200, body: "[]"}}
       end)
@@ -440,7 +440,8 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
       end)
 
       expect(MockHTTPoison, :get, fn url, _headers ->
-        assert "#{line_item_id_with_params.id}&resource_id=#{line_item_id_with_params.resourceId}&limit=1" == url
+        assert "#{line_item_id_with_params.id}&resource_id=#{line_item_id_with_params.resourceId}&limit=1" ==
+                 url
 
         {:ok, %HTTPoison.Response{status_code: 200, body: "[]"}}
       end)
@@ -491,12 +492,13 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
 
     maximum_score_provider = fn -> 1.0 end
 
-    {:ok, %{
-      score: score,
-      line_item: line_item,
-      access_token: access_token,
-      line_item_id_with_params: line_item_id_with_params,
-      maximum_score_provider: maximum_score_provider
-    }}
+    {:ok,
+     %{
+       score: score,
+       line_item: line_item,
+       access_token: access_token,
+       line_item_id_with_params: line_item_id_with_params,
+       maximum_score_provider: maximum_score_provider
+     }}
   end
 end

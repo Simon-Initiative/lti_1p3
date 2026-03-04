@@ -49,6 +49,13 @@
 8. Add/update tests in `test/lti_1p3/**` for success and failure paths.
 9. Run formatting and tests before finalizing.
 10. Update docs (`README.md` and/or `docs/*.md`) when behavior changes.
+11. Update top-level `CHANGELOG.md` for every implemented feature or bug fix:
+   - Add a high-level summary under `## [Unreleased]`.
+   - Use Keep a Changelog sections (`Added`, `Changed`, `Fixed`, etc.).
+   - Keep entries concise and integration-focused (not line-by-line diffs).
+12. Keep migration documentation up to date whenever necessary for any changes made:
+   - Add/update `docs/migrations/<version>.md` when a release requires client app migrations and/or infrastructure changes.
+   - Include: required client app changes, required infrastructure changes, and concise upgrade steps.
 
 ## Coding Style Guidelines
 

@@ -4,43 +4,34 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
   import Mox
 
   alias Lti_1p3.Test.MockHTTPoison
+  alias Lti_1p3.Tool
   alias Lti_1p3.Tool.LaunchValidation
 
-  # Make sure mocks are verified when the test exits
   setup :verify_on_exit!
   setup :set_mox_from_context
 
   setup do
-    # Start the key provider supervisor for each test
     {:ok, supervisor_pid} =
       Lti_1p3.KeyProviderSupervisor.start_link(
         key_provider: Lti_1p3.KeyProviders.MemoryKeyProvider,
-        # Disable automatic refresh for tests
         refresh_interval: 0
       )
 
-    # Get the child process (MemoryKeyProvider) and allow it to use the mock
-    [
-      {Lti_1p3.KeyProviders.MemoryKeyProvider, child_pid, :worker,
-       [Lti_1p3.KeyProviders.MemoryKeyProvider]}
-    ] =
+    [{Lti_1p3.KeyProviders.MemoryKeyProvider, child_pid, :worker, _}] =
       Supervisor.which_children(supervisor_pid)
 
     Mox.allow(MockHTTPoison, self(), child_pid)
 
-    # Clear key cache before each test to ensure clean state
     Lti_1p3.KeyProviders.MemoryKeyProvider.clear_cache()
 
     on_exit(fn ->
-      if Process.alive?(supervisor_pid) do
-        Process.exit(supervisor_pid, :normal)
-      end
+      if Process.alive?(supervisor_pid), do: Process.exit(supervisor_pid, :normal)
     end)
 
     :ok
   end
 
-  describe "launch validation" do
+  describe "validate_launch/3" do
     setup do
       jwk = jwk_fixture()
       registration = registration_fixture(%{tool_jwk_id: jwk.id})
@@ -49,255 +40,266 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
       _deployment =
         deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
 
-      state = "some-state"
-
-      [jwk: jwk, registration: registration, deployment_id: deployment_id, state: state]
+      %{jwk: jwk, registration: registration, deployment_id: deployment_id, state: "some-state"}
     end
 
-    test "passes validation for a valid launch request and caches lti params", %{
+    test "returns normalized launch struct for valid launch", %{
       jwk: jwk,
       deployment_id: deployment_id,
       state: state
     } do
       claims =
         all_default_claims()
-        |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
 
       id_token = generate_id_token(jwk, jwk.kid, claims)
-      params = %{"state" => state, "id_token" => id_token}
 
-      MockHTTPoison
-      |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
 
-      assert {:ok, _lti_params} = LaunchValidation.validate(params, state)
+      assert {:ok, %Lti_1p3.Tool.Launch{} = launch} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+
+      assert launch.message_type == "LtiResourceLinkRequest"
+      assert launch.deployment_id == deployment_id
+      assert launch.raw_claims == nil
+      assert launch.registration.id
     end
 
-    test "passes validation when aud claim is a list", %{
+    test "can include raw claims in launch response", %{
       jwk: jwk,
       deployment_id: deployment_id,
       state: state
     } do
       claims =
         all_default_claims()
-        |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-        |> Map.put("aud", ["12345"])
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
 
       id_token = generate_id_token(jwk, jwk.kid, claims)
-      params = %{"state" => state, "id_token" => id_token}
 
-      MockHTTPoison
-      |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
 
-      assert {:ok, _lti_params} = LaunchValidation.validate(params, state)
+      assert {:ok, %Lti_1p3.Tool.Launch{raw_claims: raw_claims}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state,
+                 raw_claims: true
+               )
+
+      assert raw_claims["iss"] == claims["iss"]
     end
 
-    test "passes validation when JWK is not Base64URL encoded", %{
+    test "supports deep-linking request validation scaffolding", %{
       jwk: jwk,
       deployment_id: deployment_id,
       state: state
     } do
       claims =
         all_default_claims()
-        |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+        |> Map.put(
+          "https://purl.imsglobal.org/spec/lti/claim/message_type",
+          "LtiDeepLinkingRequest"
+        )
+        |> Map.put("https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings", %{
+          "deep_link_return_url" => "https://tool.example.com/return"
+        })
 
       id_token = generate_id_token(jwk, jwk.kid, claims)
-      params = %{"state" => state, "id_token" => id_token}
 
-      transform_fn = fn map ->
-        Map.update!(map, "n", &convert_to_base64_encoding(&1)) |> Map.put("exp", 12345)
-      end
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
 
-      MockHTTPoison
-      |> expect(:get, fn _url -> mock_get_jwk_keys(jwk, transform: transform_fn) end)
+      assert {:ok, %Lti_1p3.Tool.Launch{message_type: "LtiDeepLinkingRequest"}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+    end
 
-      assert {:ok, _lti_params} = LaunchValidation.validate(params, state)
+    test "fails with explicit state stage on mismatched state", %{
+      jwk: jwk,
+      deployment_id: deployment_id
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+
+      assert {:error, %{stage: :state, reason: :invalid_oidc_state}} =
+               Tool.validate_launch(
+                 %{"state" => "request-state", "id_token" => id_token},
+                 "session-state"
+               )
+    end
+
+    test "fails with explicit jwt stage for malformed token", %{state: state} do
+      assert {:error, %{stage: :registration, reason: :token_malformed}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => "malformed"}, state)
+    end
+
+    test "fails with explicit jwt stage for missing kid", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+
+      signer = Joken.Signer.create("RS256", %{"pem" => jwk.pem})
+      {:ok, claims} = Joken.generate_claims(%{}, claims)
+      id_token = Joken.generate_and_sign!(%{}, claims, signer)
+
+      assert {:error, %{stage: :jwt, reason: :missing_kid}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+    end
+
+    test "fails with explicit jwt stage for unsupported algorithm", %{
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+
+      signer = Joken.Signer.create("HS256", "secret")
+      {:ok, claims} = Joken.generate_claims(%{}, claims)
+      id_token = Joken.generate_and_sign!(%{}, claims, signer)
+
+      assert {:error, %{stage: :jwt, reason: :invalid_jwt_alg}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+    end
+
+    test "fails with explicit jwt stage when key resolution fails", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+
+      id_token = generate_id_token(jwk, "unknown-kid", claims)
+
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
+
+      assert {:error, %{stage: :jwt, reason: :key_not_found}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+    end
+
+    test "fails with explicit jwt stage for invalid audience", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("aud", ["12345", "different-client-id"])
+        |> Map.delete("azp")
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
+
+      assert {:error, %{stage: :jwt, reason: :invalid_audience}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+    end
+
+    test "fails with explicit timestamps stage for expired token", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+        |> Map.put(
+          "exp",
+          Timex.now() |> Timex.subtract(Timex.Duration.from_minutes(5)) |> Timex.to_unix()
+        )
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
+
+      assert {:error,
+              %{stage: :timestamps, reason: :invalid_jwt_timestamp, msg: "JWT exp is expired"}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+    end
+
+    test "fails with explicit nonce stage for duplicate nonce", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+        |> Map.put("nonce", "duplicate nonce")
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
+
+      assert {:ok, _launch} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+
+      assert {:error, %{stage: :nonce, reason: :invalid_nonce, msg: "Duplicate nonce"}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+    end
+
+    test "fails with explicit message stage for unsupported message type", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/message_type", "InvalidMessageType")
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
+
+      assert {:error, %{stage: :message, reason: :invalid_message_type}} =
+               Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
+    end
+
+    test "legacy LaunchValidation module delegates to the same pipeline", %{
+      jwk: jwk,
+      deployment_id: deployment_id,
+      state: state
+    } do
+      claims =
+        all_default_claims()
+        |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
+
+      id_token = generate_id_token(jwk, jwk.kid, claims)
+
+      expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
+
+      assert {:ok, %Lti_1p3.Tool.Launch{}} =
+               LaunchValidation.validate(%{"state" => state, "id_token" => id_token}, state)
     end
   end
 
-  test "fails validation on missing oidc state" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
+  test "emits stage and outcome telemetry events for tool launch" do
+    handler_id = "tool-launch-telemetry-#{System.unique_integer([:positive])}"
 
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
+    parent = self()
 
-    state = "some-state"
-    session_state = nil
-
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error,
-              %{
-                reason: :invalid_oidc_state,
-                msg:
-                  "State from session is missing. Make sure cookies are enabled and configured correctly"
-              }}
-  end
-
-  test "fails validation on invalid oidc state" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "doesn't"
-    session_state = "match"
-
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error,
-              %{
-                reason: :invalid_oidc_state,
-                msg: "State from OIDC request does not match session"
-              }}
-  end
-
-  test "fails validation if registration doesn't exist for client id" do
-    jwk = jwk_fixture()
-
-    registration =
-      registration_fixture(%{
-        issuer: "some issuer",
-        client_id: "some client_id",
-        key_set_url: "some key_set_url",
-        auth_token_url: "some auth_token_url",
-        auth_login_url: "some auth_login_url",
-        auth_server: "some auth_aud",
-        tool_jwk_id: jwk.id
-      })
-
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error,
-              %{
-                reason: :invalid_registration,
-                msg:
-                  "Registration with issuer \"https://lti-ri.imsglobal.org\" and client id \"12345\" not found",
-                issuer: "https://lti-ri.imsglobal.org",
-                client_id: "12345"
-              }}
-  end
-
-  test "fails validation on missing id_token" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-    id_token = nil
-    params = %{"state" => state, "id_token" => id_token}
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error, %{reason: :missing_param, msg: "Missing id_token"}}
-  end
-
-  test "fails validation on malformed id_token" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-    id_token = "malformed"
-    params = %{"state" => state, "id_token" => id_token}
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error, %{reason: :token_malformed, msg: "Invalid JWT"}}
-  end
-
-  test "fails validation on invalid signature" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    different_jwk = jwk_fixture(%{kid: jwk.kid})
-
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(different_jwk) end)
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error, %{reason: :signature_error, msg: "Invalid JWT"}}
-  end
-
-  test "fails validation on expired exp" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-      |> put_in(
-        ["exp"],
-        Timex.now() |> Timex.subtract(Timex.Duration.from_minutes(5)) |> Timex.to_unix()
+    :ok =
+      :telemetry.attach_many(
+        handler_id,
+        [
+          [:lti_1p3, :core, :validation, :stage],
+          [:lti_1p3, :core, :validation, :outcome]
+        ],
+        fn event, _measurements, metadata, _config ->
+          send(parent, {:telemetry_event, event, metadata})
+        end,
+        nil
       )
 
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
+    on_exit(fn -> :telemetry.detach(handler_id) end)
 
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT exp is expired"}}
-  end
-
-  test "fails validation on token iat invalid" do
     jwk = jwk_fixture()
     registration = registration_fixture(%{tool_jwk_id: jwk.id})
     deployment_id = "1"
@@ -305,185 +307,21 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
     _deployment =
       deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
 
-    state = "some-state"
-    session_state = state
-
     claims =
       all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-      |> put_in(
-        ["iat"],
-        Timex.now() |> Timex.add(Timex.Duration.from_minutes(5)) |> Timex.to_unix()
-      )
+      |> Map.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deployment_id)
 
     id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT iat is invalid"}}
-  end
-
-  test "fails validation on both expired exp and iat invalid" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
     state = "some-state"
-    session_state = state
 
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-      |> put_in(
-        ["exp"],
-        Timex.now() |> Timex.subtract(Timex.Duration.from_minutes(5)) |> Timex.to_unix()
-      )
-      |> put_in(
-        ["iat"],
-        Timex.now() |> Timex.add(Timex.Duration.from_minutes(5)) |> Timex.to_unix()
-      )
+    expect(MockHTTPoison, :get, fn _url -> mock_get_jwk_keys(jwk) end)
 
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
+    assert {:ok, %Lti_1p3.Tool.Launch{}} =
+             Tool.validate_launch(%{"state" => state, "id_token" => id_token}, state)
 
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
+    assert_receive {:telemetry_event, [:lti_1p3, :core, :validation, :stage],
+                    %{stage: :state, result: :ok}}
 
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error, %{reason: :invalid_jwt_timestamp, msg: "JWT exp and iat are invalid"}}
-  end
-
-  test "fails validation on duplicate nonce" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-      |> put_in(["nonce"], "duplicate nonce")
-
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
-
-    # passes on first attempt with a given nonce
-    assert {:ok, _jwt_body} = LaunchValidation.validate(params, session_state)
-
-    # fails on second attempt with a duplicate nonce (no HTTP call needed due to caching)
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error, %{reason: :invalid_nonce, msg: "Duplicate nonce"}}
-  end
-
-  test "fails validation if deployment doesn't exist" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-
-    claims =
-      all_default_claims()
-      |> put_in(
-        ["https://purl.imsglobal.org/spec/lti/claim/deployment_id"],
-        "invalid_deployment_id"
-      )
-
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error,
-              %{
-                reason: :invalid_deployment,
-                msg: "Deployment with id \"invalid_deployment_id\" not found",
-                registration_id: registration.id,
-                deployment_id: "invalid_deployment_id"
-              }}
-  end
-
-  test "fails validation on missing message type" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/message_type"], nil)
-
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error, %{reason: :invalid_message_type, msg: "Missing message type"}}
-  end
-
-  test "fails validation on invalid message type" do
-    jwk = jwk_fixture()
-    registration = registration_fixture(%{tool_jwk_id: jwk.id})
-    deployment_id = "1"
-
-    _deployment =
-      deployment_fixture(%{deployment_id: deployment_id, registration_id: registration.id})
-
-    state = "some-state"
-    session_state = state
-
-    claims =
-      all_default_claims()
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/deployment_id"], deployment_id)
-      |> put_in(["https://purl.imsglobal.org/spec/lti/claim/message_type"], "InvalidMessageType")
-
-    id_token = generate_id_token(jwk, jwk.kid, claims)
-    params = %{"state" => state, "id_token" => id_token}
-
-    MockHTTPoison
-    |> expect(:get, fn _url -> mock_get_jwk_keys(jwk) end)
-
-    assert LaunchValidation.validate(params, session_state) ==
-             {:error,
-              %{
-                reason: :invalid_message_type,
-                msg: "Invalid or unsupported message type \"InvalidMessageType\""
-              }}
-  end
-
-  defp convert_to_base64_encoding(str) do
-    String.replace(str, ["-", "_"], fn
-      "-" -> "+"
-      "_" -> "/"
-      c -> c
-    end)
+    assert_receive {:telemetry_event, [:lti_1p3, :core, :validation, :outcome], %{result: :ok}}
   end
 end

@@ -64,7 +64,7 @@ defmodule MyApp.Application do
 end
 ```
 
-The key provider system provides intelligent caching of platform public keys with automatic refresh capabilities. For more details, see the [Key Provider System Documentation](./docs/key_provider_system.md).
+The key provider system provides intelligent caching of platform public keys with automatic refresh capabilities. For more details, see the [Key Provider System Documentation](docs/key_provider_system.md).
 
 ### Jwk
 
@@ -143,20 +143,20 @@ Before a launch can be performed, a platform must be registered with your tool b
 
 Your tool implementation will need to have 2 tool-specific endpoints for handling LTI requests. The first will be a `login` endpoint, which will issue a login request back to the platform. The second will be a `launch` endpoint, which will validate the lti launch details and if successful, display the resource. The details of both of these steps is outlined in the [LTI 1.3 Launch Overview](./docs/lti_1p3_overview.md). You will need to provide both of these endpoint urls to the platform as part of their registration process for your tool.
 
-The first endpoint, `login`, uses the `Lti_1p3.Tool.OidcLogin` module to validate the request and return a state key and redirect_uri. For example:
+The first endpoint, `login`, uses `Lti_1p3.Tool.login_redirect/2` to validate the request and return normalized redirect metadata. For example:
 
 ```elixir
 defmodule MyAppWeb.LtiController do
   use MyAppWeb, :controller
 
   def login(conn, params) do
-    case Lti_1p3.OidcLogin.oidc_login_redirect_url(params) do
-      {:ok, state, redirect_url} ->
+    case Lti_1p3.Tool.login_redirect(params) do
+      {:ok, %{state: state, redirect_url: redirect_url}} ->
         conn
         |> put_session("state", state)
         |> redirect(external: redirect_url)
 
-      {:error, %{reason: :invalid_registration, msg: _msg, issuer: issuer, client_id: client_id}} ->
+      {:error, %{reason: :invalid_registration, details: %{issuer: issuer, client_id: client_id}}} ->
         handle_invalid_registration(conn, issuer, client_id)
 
       {:error, %{reason: _reason, msg: msg}} ->
@@ -171,7 +171,7 @@ end
 
 Notice how the returned state is stored in the session so that it can be used later in the launch request. The user is then redirected to the returned redirect_url. In the case where an error is returned, a map with the reason code, error message, and any additional data associated with the specific error is returned and can be handled accordingly.
 
-The second endpoint, `launch`, uses the `Lti_1p3.Tool.LaunchValidation` module to validate the launch and extract the lti claims. For example:
+The second endpoint, `launch`, uses `Lti_1p3.Tool.validate_launch/3` to validate the launch and return a typed `%Lti_1p3.Tool.Launch{}`. For example:
 
 ```elixir
 defmodule MyAppWeb.LtiController do
@@ -181,14 +181,14 @@ defmodule MyAppWeb.LtiController do
 
   def launch(conn, params) do
     session_state = Plug.Conn.get_session(conn, "state")
-    case Lti_1p3.Tool.LaunchValidation.validate(params, session_state) do
-      {:ok, claims} ->
-        handle_valid_lti_1p3_launch(conn, claims)
+    case Lti_1p3.Tool.validate_launch(params, session_state) do
+      {:ok, launch} ->
+        handle_valid_lti_1p3_launch(conn, launch)
 
-      {:error, %{reason: :invalid_registration, msg: _msg, issuer: issuer, client_id: client_id}} ->
+      {:error, %{reason: :invalid_registration, details: %{issuer: issuer, client_id: client_id}}} ->
         handle_invalid_registration(conn, issuer, client_id)
 
-      {:error, %{reason: :invalid_deployment, msg: _msg, registration_id: registration_id, deployment_id: deployment_id}} ->
+      {:error, %{reason: :invalid_deployment, details: %{registration_id: registration_id, deployment_id: deployment_id}}} ->
         handle_invalid_deployment(conn, registration_id, deployment_id)
 
       {:error, %{reason: _reason, msg: msg}} ->
@@ -201,7 +201,7 @@ defmodule MyAppWeb.LtiController do
 end
 ```
 
-If successful, `validate` returns the LTI claims from the request.
+If successful, `validate_launch` returns a normalized launch struct with claims, message type, and deployment metadata.
 
 If you are using Phoenix, don't forget to add these endpoints to your `router.ex`. The LTI 1.3 specification says the `login` request can be sent as either a `GET` or `POST`, so we must support both methods.
 
@@ -233,7 +233,7 @@ Before your platform can initiate a launch request, you must first create a **Pl
 
 The choice of client_id here is somewhat arbitrary and can simply be an incrementing integer or guid-based. The only constraint is that it must be unique. This client_id will be provided to the tool as part of it's configuration details.
 
-Your platform implementation will need to have an `authorize_redirect` endpoint for handling platform-specific LTI requests which will verify the current user logged in is the same user who initiated the request using the login_hint and then use the `Lti_1p3.AuthorizationRedirect` module to authorize the LTI details by verifying the LTI details provided by the tool and if successful, render a form that will post the final LTI request and params to the tool. For example:
+Your platform implementation will need to have an `authorize_redirect` endpoint for handling platform-specific LTI requests which will verify the current user logged in is the same user who initiated the request using the login_hint and then use `Lti_1p3.Platform.authorize_redirect/5` to authorize and sign the launch payload. For example:
 
 ```elixir
 defmodule MyAppWeb.LtiController do
@@ -243,13 +243,17 @@ defmodule MyAppWeb.LtiController do
 
   def authorize_redirect(conn, params) do
     issuer = "https://platform.example.edu"
-    deployment_id = "some-deployment-id"
-
     # current user can be any map or struct that has an id: %{id: user_id}
     current_user = conn.assigns[:current_user]
+    claims = [
+      Lti_1p3.Claims.MessageType.message_type(:lti_resource_link_request),
+      Lti_1p3.Claims.DeploymentId.deployment_id("some-deployment-id"),
+      Lti_1p3.Claims.TargetLinkUri.target_link_uri(params["redirect_uri"]),
+      Lti_1p3.Claims.Roles.roles([])
+    ]
 
-    case Lti_1p3.AuthorizationRedirect.authorize_redirect(params, current_user, issuer, deployment_id) do
-      {:ok, redirect_uri, state, id_token} ->
+    case Lti_1p3.Platform.authorize_redirect(params, current_user, issuer, claims) do
+      {:ok, %{redirect_uri: redirect_uri, state: state, id_token: id_token}} ->
         conn
         |> render("post_redirect.html", redirect_uri: redirect_uri, state: state, id_token: id_token)
 

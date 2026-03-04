@@ -96,7 +96,7 @@ defmodule Lti_1p3.ToolDataProvider do
       {nil, nil}
   """
   @callback get_registration_deployment(String.t(), String.t(), String.t()) ::
-              {%Registration{}, %Deployment{}} | nil
+              {%Registration{} | nil, %Deployment{} | nil}
 
   @doc """
   Gets the jwk associated with the given Registration.

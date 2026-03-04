@@ -108,10 +108,10 @@ defmodule Lti_1p3.Tool.Services.NRPSTest do
     } do
       expect(MockHTTPoison, :get, fn _url, headers ->
         assert [
-          {"Content-Type", "application/json"},
-          {"Authorization", "Bearer fake_token"},
-          {"Accept", "application/vnd.ims.lti-nrps.v2.membershipcontainer+json"}
-        ] == headers
+                 {"Content-Type", "application/json"},
+                 {"Authorization", "Bearer fake_token"},
+                 {"Accept", "application/vnd.ims.lti-nrps.v2.membershipcontainer+json"}
+               ] == headers
 
         {:ok, %HTTPoison.Response{status_code: 200, body: "{\"members\": []}"}}
       end)
