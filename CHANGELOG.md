@@ -33,6 +33,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - In-memory provider contract consistency and runtime implementation drift.
 - Deterministic error shape alignment across core tool/platform flows.
 
-### Migration Notes
+### Migration Guide
 
-Client app and infrastructure changes are tracked in [docs/migrations/1.0.0.md](docs/migrations/1.0.0.md).
+Required changes:
+
+- None
+
+Upgrade steps:
+
+1. Update to `lti_1p3` `1.0.0`.
+2. Run your normal validation suite (`mix test` and integration checks).
