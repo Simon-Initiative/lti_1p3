@@ -6,6 +6,7 @@ defmodule Lti_1p3.Tool do
   import Lti_1p3.Config
 
   alias Lti_1p3.Tool.Launch
+  alias Lti_1p3.Tool.DeepLinking
   alias Lti_1p3.Tool.LaunchValidation
   alias Lti_1p3.Tool.OidcLogin
 
@@ -32,6 +33,37 @@ defmodule Lti_1p3.Tool do
           {:ok, Launch.t()} | {:error, error_map()}
   def validate_launch(params, expected_state, opts \\ []) do
     LaunchValidation.validate(params, expected_state, opts)
+  end
+
+  @doc """
+  Validates deep-linking launch claims and returns a typed deep-linking request.
+  """
+  @spec validate_deep_linking_request(map()) ::
+          {:ok, DeepLinking.Request.t()} | {:error, error_map()}
+  def validate_deep_linking_request(launch_claims) do
+    DeepLinking.validate_request(launch_claims)
+  end
+
+  @doc """
+  Builds a typed deep-linking content item.
+  """
+  @spec deep_linking_content_item(String.t() | atom(), map()) ::
+          {:ok, DeepLinking.ContentItem.t()} | {:error, error_map()}
+  def deep_linking_content_item(type, attrs \\ %{}) do
+    DeepLinking.content_item(type, attrs)
+  end
+
+  @doc """
+  Builds and signs a deep-linking response JWT.
+  """
+  @spec build_deep_linking_response(
+          DeepLinking.Request.t(),
+          [DeepLinking.ContentItem.t()],
+          keyword()
+        ) ::
+          {:ok, %{jwt: String.t(), return_url: String.t()}} | {:error, error_map()}
+  def build_deep_linking_response(request, items, opts \\ []) do
+    DeepLinking.build_response(request, items, opts)
   end
 
   @doc """
