@@ -225,6 +225,8 @@ end
 
 For full examples, see [`docs/tool_deep_linking_guide.md`](docs/tool_deep_linking_guide.md).
 
+For NRPS roster retrieval APIs (claim parsing, paging, stream, and fetch-all), see [`docs/tool_nrps_guide.md`](docs/tool_nrps_guide.md).
+
 If you are using Phoenix, don't forget to add these endpoints to your `router.ex`. The LTI 1.3 specification says the `login` request can be sent as either a `GET` or `POST`, so we must support both methods.
 
 ```elixir

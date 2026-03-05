@@ -5,57 +5,57 @@
 - NRPS tool requirement matrix and target API signatures.
 
 ### Tasks
-- [ ] Map NRPS requirements, scope matrix, and current gaps.
-- [ ] Finalize page/stream/fetch-all API contracts.
-- [ ] Finalize typed models and reason atom catalog.
-- [ ] Identify utility extraction seams for link/filter helpers.
+- [x] Map NRPS requirements, scope matrix, and current gaps.
+- [x] Finalize page/stream/fetch-all API contracts.
+- [x] Finalize typed models and reason atom catalog.
+- [x] Identify utility extraction seams for link/filter helpers.
 
 ### Verification
-- [ ] Requirement matrix approved.
-- [ ] API contracts and reason atoms approved.
+- [x] Requirement matrix approved.
+- [x] API contracts and reason atoms approved.
 
 ## Phase 1 - Models, Parsing, and Scope Enforcement
 ### Deliverables
 - Typed endpoint/membership/page models and deterministic scope checks.
 
 ### Tasks
-- [ ] Implement claim parser and endpoint model validation.
-- [ ] Implement membership model and role normalization.
-- [ ] Implement scope preflight and structured errors.
-- [ ] Add unit tests for parser/scope/error branches.
+- [x] Implement claim parser and endpoint model validation.
+- [x] Implement membership model and role normalization.
+- [x] Implement scope preflight and structured errors.
+- [x] Add unit tests for parser/scope/error branches.
 
 ### Verification
-- [ ] Unit tests pass for parser/scope/normalization.
-- [ ] Regression tests cover known scope issues.
+- [x] Unit tests pass for parser/scope/normalization.
+- [x] Regression tests cover known scope issues.
 
 ## Phase 2 - Pagination and Retrieval APIs
 ### Deliverables
 - Full pagination traversal with stream and eager retrieval modes.
 
 ### Tasks
-- [ ] Implement `Link` header parser and page traversal.
-- [ ] Implement stream API.
-- [ ] Implement eager fetch-all with max-page guard.
-- [ ] Implement optional filter and limit support.
+- [x] Implement `Link` header parser and page traversal.
+- [x] Implement stream API.
+- [x] Implement eager fetch-all with max-page guard.
+- [x] Implement optional filter and limit support.
 
 ### Verification
-- [ ] Integration tests pass for multi-page and filter paths.
-- [ ] Max-page guard behavior is verified.
+- [x] Integration tests pass for multi-page and filter paths.
+- [x] Max-page guard behavior is verified.
 
 ## Phase 3 - Hardening and Extraction Readiness
 ### Deliverables
 - Production-ready observability plus reusable module extraction plan.
 
 ### Tasks
-- [ ] Add telemetry events and structured logs.
-- [ ] Document utility candidates with concrete call sites and tests.
-- [ ] Extract proven duplicate helpers into reusable modules where appropriate.
-- [ ] Update docs with tool NRPS examples and utility usage notes.
+- [x] Add telemetry events and structured logs.
+- [x] Document utility candidates with concrete call sites and tests.
+- [x] Extract proven duplicate helpers into reusable modules where appropriate.
+- [x] Update docs with tool NRPS examples and utility usage notes.
 
 ### Verification
-- [ ] Telemetry/retry tests pass.
-- [ ] Reusable helpers are covered by focused unit tests.
-- [ ] `mix docs` completes with current guides.
+- [x] Telemetry/retry tests pass.
+- [x] Reusable helpers are covered by focused unit tests.
+- [x] `mix docs` completes with current guides.
 
 ## Phase 4 - Manual QA Acceptance Testing
 ### Deliverables
@@ -64,8 +64,8 @@
 ### Tasks
 - [ ] Validate roster retrieval with at least 2 LMS sandboxes.
 - [ ] Validate pagination and filters.
-- [ ] Validate negative paths (scope denial, malformed payload, token expiry).
-- [ ] Record QA findings and remediation ownership.
+- [x] Validate negative paths (scope denial, malformed payload, token expiry).
+- [x] Record QA findings and remediation ownership.
 
 ### Verification
 - [ ] QA report approved.
