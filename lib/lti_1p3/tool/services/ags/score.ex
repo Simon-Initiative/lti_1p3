@@ -1,14 +1,10 @@
 defmodule Lti_1p3.Tool.Services.AGS.Score do
+  @moduledoc """
+  AGS score payload.
+  """
+
   @derive Jason.Encoder
-  @enforce_keys [
-    :timestamp,
-    :scoreGiven,
-    :scoreMaximum,
-    :comment,
-    :activityProgress,
-    :gradingProgress,
-    :userId
-  ]
+  @enforce_keys [:timestamp, :activityProgress, :gradingProgress, :userId]
   defstruct [
     :timestamp,
     :scoreGiven,
@@ -19,14 +15,11 @@ defmodule Lti_1p3.Tool.Services.AGS.Score do
     :userId
   ]
 
-  # The javascript naming convention here is important to match what the
-  # LTI AGS standard expects
-
   @type t() :: %__MODULE__{
           timestamp: String.t(),
-          scoreGiven: float,
-          scoreMaximum: float,
-          comment: String.t(),
+          scoreGiven: float() | integer() | nil,
+          scoreMaximum: float() | integer() | nil,
+          comment: String.t() | nil,
           activityProgress: String.t(),
           gradingProgress: String.t(),
           userId: String.t()

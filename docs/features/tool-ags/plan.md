@@ -5,57 +5,57 @@
 - AGS tool requirement matrix and finalized API surface.
 
 ### Tasks
-- [ ] Map AGS tool operations and required scopes.
-- [ ] Audit current implementation and enumerate missing behavior.
-- [ ] Finalize typed models and error reason catalog.
-- [ ] Define candidate utility extraction seams in tool modules.
+- [x] Map AGS tool operations and required scopes.
+- [x] Audit current implementation and enumerate missing behavior.
+- [x] Finalize typed models and error reason catalog.
+- [x] Define candidate utility extraction seams in tool modules.
 
 ### Verification
-- [ ] Requirement matrix approved.
-- [ ] API signatures and reason atoms approved.
+- [x] Requirement matrix approved.
+- [x] API signatures and reason atoms approved.
 
 ## Phase 1 - Models, Parsing, and Scope Enforcement
 ### Deliverables
 - Typed structs and deterministic preflight authorization.
 
 ### Tasks
-- [ ] Implement/refresh endpoint, line item, score, result, and page structs.
-- [ ] Implement claim parser and scope policy.
-- [ ] Normalize all public errors to structured maps.
-- [ ] Add unit tests for parsing/scope/error branches.
+- [x] Implement/refresh endpoint, line item, score, result, and page structs.
+- [x] Implement claim parser and scope policy.
+- [x] Normalize all public errors to structured maps.
+- [x] Add unit tests for parsing/scope/error branches.
 
 ### Verification
-- [ ] Unit tests pass for parser, scope policy, and error mapping.
-- [ ] Existing behavior regressions are covered.
+- [x] Unit tests pass for parser, scope policy, and error mapping.
+- [x] Existing behavior regressions are covered.
 
 ## Phase 2 - Tool AGS Operations
 ### Deliverables
 - Full line item, score, and result operation coverage.
 
 ### Tasks
-- [ ] Implement line item list/create/read/update/delete operations.
-- [ ] Implement score posting validation and execution.
-- [ ] Implement result retrieval and pagination traversal.
-- [ ] Implement compatibility profile hooks.
+- [x] Implement line item list/create/read/update/delete operations.
+- [x] Implement score posting validation and execution.
+- [x] Implement result retrieval and pagination traversal.
+- [x] Implement compatibility profile hooks.
 
 ### Verification
-- [ ] Integration tests pass for success/failure branches.
-- [ ] Pagination and scope matrix tests pass.
+- [x] Integration tests pass for success/failure branches.
+- [x] Pagination and scope matrix tests pass.
 
 ## Phase 3 - Hardening and Extraction Readiness
 ### Deliverables
 - Production-ready observability plus reusable module extraction plan.
 
 ### Tasks
-- [ ] Add telemetry events and structured logs.
-- [ ] Document utility candidates with concrete call sites and tests.
-- [ ] Extract proven duplicate helpers into reusable modules where appropriate.
-- [ ] Update docs with tool AGS examples and utility usage notes.
+- [x] Add telemetry events and structured logs.
+- [x] Document utility candidates with concrete call sites and tests.
+- [x] Extract proven duplicate helpers into reusable modules where appropriate.
+- [x] Update docs with tool AGS examples and utility usage notes.
 
 ### Verification
-- [ ] Telemetry assertions pass.
-- [ ] Reusable helpers are covered by focused unit tests.
-- [ ] `mix docs` completes with current guides.
+- [x] Telemetry assertions pass.
+- [x] Reusable helpers are covered by focused unit tests.
+- [x] `mix docs` completes with current guides.
 
 ## Phase 4 - Manual QA Acceptance Testing
 ### Deliverables

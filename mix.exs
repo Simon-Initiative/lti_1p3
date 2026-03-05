@@ -82,6 +82,7 @@ defmodule Lti_1p3.MixProject do
         "docs/lti_1p3_overview.md",
         "docs/core_tool_platform_guide.md",
         "docs/tool_deep_linking_guide.md",
+        "docs/tool_ags_guide.md",
         "docs/tool_nrps_guide.md",
         "docs/telemetry.md",
         "docs/core_migration_guide.md",

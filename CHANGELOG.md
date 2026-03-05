@@ -30,6 +30,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   - `Lti_1p3.Services.HTTP.LinkHeader`
   - `Lti_1p3.Services.HTTP.QueryFilters`
 - Tool NRPS guide (`docs/tool_nrps_guide.md`) and feature artifacts under `docs/features/tool-nrps/`.
+- Tool AGS 2.0 APIs:
+  - `Lti_1p3.Tool.Services.AGS.from_launch_claim/1`
+  - `Lti_1p3.Tool.Services.AGS.list_line_items/3`
+  - `Lti_1p3.Tool.Services.AGS.read_line_item/4`
+  - `Lti_1p3.Tool.Services.AGS.create_line_item/4`
+  - `Lti_1p3.Tool.Services.AGS.update_line_item/5`
+  - `Lti_1p3.Tool.Services.AGS.delete_line_item/4`
+  - `Lti_1p3.Tool.Services.AGS.post_score/5`
+  - `Lti_1p3.Tool.Services.AGS.list_results/4`
+  - `Lti_1p3.Tool.Services.AGS.fetch_all_results/4`
+- New tool AGS modules for typed endpoint/page/result modeling, parsing, scope policy, structured errors, compatibility profile hooks, telemetry, and HTTP client retry behavior.
+- Shared HTTP request helper module for cross-service reuse:
+  - `Lti_1p3.Services.HTTP.Request`
+- Tool AGS guide (`docs/tool_ags_guide.md`) and feature artifacts under `docs/features/tool-ags/`.
 - Stage-based core validation modules for state, registration, JWT, timestamps, deployment, nonce, and message validation.
 - Core telemetry events for validation stages and outcomes.
 - Provider contract conformance tests and migration documentation.
@@ -46,6 +60,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Core validation module layout was flattened from `Lti_1p3.Core.Validation.Stages.*` to `Lti_1p3.Core.Validation.*`.
 - Core validation pipelines were simplified to explicit ordered stage calls (removed generic `run_stage` wrapper pattern).
 - Existing `Lti_1p3.Tool.Services.NRPS.fetch_memberships/2` now runs through the stricter NRPS scope/filter/parser pipeline while preserving its legacy tuple shape.
+- Existing `Lti_1p3.Tool.Services.AGS` legacy helpers (`post_score/3`, `fetch_line_items/2`, `create_line_item/5`, `update_line_item/3`, `fetch_or_create_line_item/5`) now run through stricter typed AGS internals while preserving historical tuple shapes.
+- Shared query filter normalization now supports AGS filter keys (`resource_id`, `tag`, `user_id`) in addition to NRPS keys.
 
 ### Fixed
 
