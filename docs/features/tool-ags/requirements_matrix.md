@@ -10,4 +10,3 @@
 | Return structured AGS errors with operation/http/retry metadata | Implemented | `Lti_1p3.Tool.Services.AGS.Errors`, `Lti_1p3.Tool.Services.AGS.Client` | `test/lti_1p3/tool/services/ags_test.exs` |
 | Emit request/scope-denial/outcome telemetry | Implemented | `Lti_1p3.Tool.Services.AGS.Telemetry` | `test/lti_1p3/tool/services/ags_test.exs` |
 | Provide compatibility profile hooks for LMS variance | Implemented | `Lti_1p3.Tool.Services.AGS.CompatibilityPolicy` | `test/lti_1p3/tool/services/ags_test.exs` |
-| Preserve backward-compatible AGS helper tuple shapes | Implemented | `Lti_1p3.Tool.Services.AGS` | `test/lti_1p3/tool/services/ags_test.exs` |

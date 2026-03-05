@@ -21,8 +21,6 @@ defmodule Lti_1p3.Tool.Services.AGS do
   alias Lti_1p3.Tool.Services.AGS.ScopePolicy
   alias Lti_1p3.Tool.Services.AGS.Telemetry
 
-  @lti_ags_claim_url "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"
-
   @lineitem_container_accept "application/vnd.ims.lis.v2.lineitemcontainer+json"
   @lineitem_accept "application/vnd.ims.lis.v2.lineitem+json"
   @score_content_type "application/vnd.ims.lis.v1.score+json"
@@ -269,246 +267,11 @@ defmodule Lti_1p3.Tool.Services.AGS do
       ) do
     max_pages = Keyword.get(opts, :max_pages, 100)
 
-    do_fetch_all_results(
-      line_item_url,
-      endpoint,
-      access_token,
-      opts,
-      1,
-      max_pages,
-      [],
-      true
-    )
+    do_fetch_all_results(line_item_url, endpoint, access_token, opts, 1, max_pages, [], true)
   end
 
   @doc """
-  Backward-compatible single-call helper for posting a score.
-
-  Preserves return shape `{:ok, body} | {:error, "Error posting score"}`.
-  """
-  @spec post_score(Score.t(), LineItem.t(), AccessToken.t()) ::
-          {:ok, term()} | {:error, String.t()}
-  def post_score(%Score{} = score, %LineItem{} = line_item, %AccessToken{} = access_token) do
-    endpoint = legacy_endpoint(line_item.id)
-
-    score_url = Request.append_path(line_item.id, "scores")
-
-    case Client.request(:post_score, :post, score_url, access_token,
-           expected_statuses: [200, 201],
-           headers: [{"Content-Type", @score_content_type}],
-           body: Jason.encode!(score)
-         ) do
-      {:ok, %{body: body}} ->
-        Telemetry.result(%{operation: :post_score, line_item_url: line_item.id})
-        {:ok, body}
-
-      {:error, _error} ->
-        maybe_scope_denied(endpoint, access_token, :post_score)
-        {:error, "Error posting score"}
-    end
-  end
-
-  @doc """
-  Legacy helper: fetches one line items page and returns only items.
-
-  Preserves return shape `{:ok, [LineItem.t()]} | {:error, "Error retrieving all line items"}`.
-  """
-  @spec fetch_line_items(String.t(), AccessToken.t()) ::
-          {:ok, [LineItem.t()]} | {:error, String.t()}
-  def fetch_line_items(line_items_service_url, %AccessToken{} = access_token) do
-    request_url =
-      CompatibilityPolicy.apply(:list_line_items, line_items_service_url,
-        compatibility: %{default_line_items_limit: 1000}
-      )
-
-    with {:ok, response} <-
-           Client.request(:list_line_items, :get, request_url, access_token,
-             expected_statuses: [200],
-             headers: line_item_headers()
-           ),
-         {:ok, payload} <- decode_json_array(response.body, :list_line_items),
-         {:ok, page} <- Parser.parse_line_items_page(payload, response.headers, 1, request_url) do
-      {:ok, page.items}
-    else
-      _ -> {:error, "Error retrieving all line items"}
-    end
-  end
-
-  @doc """
-  Legacy helper: creates a line item by primitive arguments.
-
-  Preserves return shape `{:ok, line_item} | {:error, "Error creating new line item"}`.
-  """
-  @spec create_line_item(
-          String.t(),
-          String.t() | integer(),
-          float() | integer(),
-          String.t(),
-          AccessToken.t()
-        ) ::
-          {:ok, LineItem.t()} | {:error, String.t()}
-  def create_line_item(
-        line_items_service_url,
-        resource_id,
-        score_maximum,
-        label,
-        %AccessToken{} = access_token
-      ) do
-    attrs = %{
-      scoreMaximum: score_maximum,
-      resourceId: LineItem.to_resource_id(resource_id),
-      label: label
-    }
-
-    endpoint = legacy_endpoint(line_items_service_url)
-
-    case create_line_item(endpoint, access_token, attrs) do
-      {:ok, line_item} -> {:ok, line_item}
-      {:error, _error} -> {:error, "Error creating new line item"}
-    end
-  end
-
-  @doc """
-  Legacy helper: updates a line item by struct and changes map.
-
-  Preserves return shape `{:ok, line_item} | {:error, "Error updating existing line item"}`.
-  """
-  @spec update_line_item(LineItem.t(), map(), AccessToken.t()) ::
-          {:ok, LineItem.t()} | {:error, String.t()}
-  def update_line_item(%LineItem{} = line_item, changes, %AccessToken{} = access_token) do
-    attrs = %{
-      scoreMaximum: Map.get(changes, :scoreMaximum, line_item.scoreMaximum),
-      resourceId: line_item.resourceId,
-      label: Map.get(changes, :label, line_item.label)
-    }
-
-    endpoint = legacy_endpoint(line_item.id)
-
-    case update_line_item(line_item.id, endpoint, access_token, attrs) do
-      {:ok, updated} -> {:ok, updated}
-      {:error, _error} -> {:error, "Error updating existing line item"}
-    end
-  end
-
-  @doc """
-  Legacy helper: fetches or creates a line item by resource id.
-
-  Preserves return shape `{:ok, line_item} | {:error, "Error retrieving existing line items"}`.
-  """
-  @spec fetch_or_create_line_item(
-          String.t(),
-          String.t() | integer(),
-          (-> float() | integer()),
-          String.t(),
-          AccessToken.t()
-        ) :: {:ok, LineItem.t()} | {:error, String.t()}
-  def fetch_or_create_line_item(
-        line_items_service_url,
-        resource_id,
-        maximum_score_provider,
-        label,
-        %AccessToken{} = access_token
-      ) do
-    line_item_resource_id = LineItem.to_resource_id(resource_id)
-
-    endpoint = legacy_endpoint(line_items_service_url)
-
-    with {:ok, page} <-
-           list_line_items(endpoint, access_token,
-             resource_id: line_item_resource_id,
-             limit: 1,
-             compatibility: %{default_line_items_limit: 1000}
-           ) do
-      case page.items do
-        [] ->
-          create_line_item(
-            endpoint,
-            access_token,
-            %{
-              scoreMaximum: maximum_score_provider.(),
-              resourceId: line_item_resource_id,
-              label: label
-            }
-          )
-
-        [%LineItem{} = existing | _rest] ->
-          if existing.label != label do
-            update_line_item(existing.id, endpoint, access_token, %{
-              scoreMaximum: existing.scoreMaximum,
-              resourceId: existing.resourceId,
-              label: label
-            })
-          else
-            {:ok, existing}
-          end
-      end
-    else
-      _ -> {:error, "Error retrieving existing line items"}
-    end
-  end
-
-  @doc """
-  Returns true if grade passback service is enabled with minimum scopes for line item + score.
-  """
-  @spec grade_passback_enabled?(map()) :: boolean()
-  def grade_passback_enabled?(lti_launch_params) do
-    case Map.get(lti_launch_params, @lti_ags_claim_url) do
-      nil ->
-        false
-
-      config ->
-        Map.has_key?(config, "lineitems") and
-          has_scope?(config, "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem") and
-          has_scope?(config, "https://purl.imsglobal.org/spec/lti-ags/scope/score")
-    end
-  end
-
-  @doc """
-  Returns the line items URL from LTI launch params.
-
-  If a registration is present, uses registration `line_items_service_domain` + line items path.
-  """
-  @spec get_line_items_url(map(), map()) :: String.t() | nil
-  def get_line_items_url(lti_launch_params, registration \\ %{}) do
-    line_items_url =
-      lti_launch_params
-      |> Map.get(@lti_ags_claim_url, %{})
-      |> Map.get("lineitems")
-
-    unless is_nil(line_items_url) do
-      %URI{path: line_items_path} = URI.parse(line_items_url)
-
-      registration
-      |> get_line_items_domain(line_items_url)
-      |> URI.parse()
-      |> Map.put(:path, line_items_path)
-      |> URI.to_string()
-    end
-  end
-
-  @doc """
-  Returns true if the LTI AGS claim has a particular scope URL.
-  """
-  @spec has_scope?(map(), String.t()) :: boolean()
-  def has_scope?(lti_ags_claim, scope_url) do
-    lti_ags_claim
-    |> Map.get("scope", [])
-    |> Enum.any?(&(&1 == scope_url))
-  end
-
-  @doc """
-  Returns legacy required scopes for AGS grade passback token requests.
-  """
-  @spec required_scopes() :: [String.t()]
-  def required_scopes do
-    [
-      "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
-      "https://purl.imsglobal.org/spec/lti-ags/scope/score"
-    ]
-  end
-
-  @doc """
-  Returns complete AGS scope set by operation.
+  Returns AGS scopes by operation.
   """
   @spec required_scopes(atom()) :: [String.t()]
   def required_scopes(:all), do: ScopePolicy.all_scopes()
@@ -645,20 +408,6 @@ defmodule Lti_1p3.Tool.Services.AGS do
     end
   end
 
-  defp maybe_scope_denied(endpoint, access_token, operation) do
-    case ScopePolicy.preflight(endpoint, access_token, operation) do
-      :ok ->
-        :ok
-
-      {:error, error} ->
-        Telemetry.scope_denied(%{
-          operation: operation,
-          required_scope: get_in(error, [:details, :required_scope]),
-          source: get_in(error, [:details, :source])
-        })
-    end
-  end
-
   defp line_item_headers do
     [
       {"Accept", @lineitem_container_accept},
@@ -678,20 +427,4 @@ defmodule Lti_1p3.Tool.Services.AGS do
   end
 
   defp drop_filter_opts(opts), do: Keyword.drop(opts, [:limit, :user_id])
-
-  defp get_line_items_domain(%{line_items_service_domain: domain}, default)
-       when is_nil(domain) or domain == "",
-       do: default
-
-  defp get_line_items_domain(%{line_items_service_domain: domain}, _default), do: domain
-  defp get_line_items_domain(_registration, default), do: default
-
-  defp legacy_endpoint(line_items_url) do
-    %Endpoint{
-      line_items_url: line_items_url,
-      line_item_url: nil,
-      scopes: ScopePolicy.all_scopes(),
-      service_versions: ["2.0"]
-    }
-  end
 end

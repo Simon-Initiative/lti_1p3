@@ -60,8 +60,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Core validation module layout was flattened from `Lti_1p3.Core.Validation.Stages.*` to `Lti_1p3.Core.Validation.*`.
 - Core validation pipelines were simplified to explicit ordered stage calls (removed generic `run_stage` wrapper pattern).
 - Existing `Lti_1p3.Tool.Services.NRPS.fetch_memberships/2` now runs through the stricter NRPS scope/filter/parser pipeline while preserving its legacy tuple shape.
-- Existing `Lti_1p3.Tool.Services.AGS` legacy helpers (`post_score/3`, `fetch_line_items/2`, `create_line_item/5`, `update_line_item/3`, `fetch_or_create_line_item/5`) now run through stricter typed AGS internals while preserving historical tuple shapes.
 - Shared query filter normalization now supports AGS filter keys (`resource_id`, `tag`, `user_id`) in addition to NRPS keys.
+
+### Removed
+
+- Legacy Tool AGS compatibility helpers:
+  - `Lti_1p3.Tool.Services.AGS.post_score/3`
+  - `Lti_1p3.Tool.Services.AGS.fetch_line_items/2`
+  - `Lti_1p3.Tool.Services.AGS.create_line_item/5`
+  - `Lti_1p3.Tool.Services.AGS.update_line_item/3`
+  - `Lti_1p3.Tool.Services.AGS.fetch_or_create_line_item/5`
+- Legacy Tool AGS convenience helpers:
+  - `Lti_1p3.Tool.Services.AGS.grade_passback_enabled?/1`
+  - `Lti_1p3.Tool.Services.AGS.get_line_items_url/2`
+  - `Lti_1p3.Tool.Services.AGS.has_scope?/2`
+  - `Lti_1p3.Tool.Services.AGS.required_scopes/0`
 
 ### Fixed
 
@@ -72,9 +85,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 Required changes:
 
-- None
+- Migrate any legacy Tool AGS helper usage to typed AGS APIs.
+- Update token scope requests to use `Lti_1p3.Tool.Services.AGS.required_scopes/1`.
 
 Upgrade steps:
 
 1. Update to `lti_1p3` `1.0.0`.
-2. Run your normal validation suite (`mix test` and integration checks).
+2. Replace old AGS helper calls with `from_launch_claim/1` plus operation-specific APIs (`list_line_items/3`, `create_line_item/4`, `post_score/5`, `list_results/4`, etc.).
+3. Run your normal validation suite (`mix test` and integration checks).

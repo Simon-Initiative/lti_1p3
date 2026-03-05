@@ -7,13 +7,12 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
   alias Lti_1p3.Tool.Services.AccessToken
   alias Lti_1p3.Tool.Services.AGS
   alias Lti_1p3.Tool.Services.AGS.Endpoint
-  alias Lti_1p3.Tool.Services.AGS.LineItem
   alias Lti_1p3.Tool.Services.AGS.Score
 
   @line_items_url "https://lms.example.edu/api/lti/courses/8/line_items"
   @line_item_url "https://lms.example.edu/api/lti/courses/8/line_items/21"
 
-  @lti_params %{
+  @claim_map %{
     "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint" => %{
       "lineitems" => @line_items_url,
       "scope" => [
@@ -30,7 +29,7 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
 
   describe "from_launch_claim/1" do
     test "returns typed endpoint" do
-      assert {:ok, endpoint} = AGS.from_launch_claim(@lti_params)
+      assert {:ok, endpoint} = AGS.from_launch_claim(@claim_map)
       assert endpoint.line_items_url == @line_items_url
       assert endpoint.service_versions == ["2.0"]
       assert "https://purl.imsglobal.org/spec/lti-ags/scope/score" in endpoint.scopes
@@ -276,81 +275,6 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     end
   end
 
-  describe "legacy compatibility helpers" do
-    setup [:setup_session]
-
-    test "post_score/3 preserves legacy tuple shape", %{
-      access_token: access_token,
-      line_item: line_item,
-      score: score
-    } do
-      expect(MockHTTPoison, :post, fn _url, _body, _headers ->
-        {:ok,
-         %HTTPoison.Response{status_code: 200, body: Jason.encode!(%{result: "ok"}), headers: []}}
-      end)
-
-      assert {:ok, "{\"result\":\"ok\"}"} = AGS.post_score(score, line_item, access_token)
-    end
-
-    test "fetch_membership-shaped line item helper remains available", %{
-      access_token: access_token
-    } do
-      expect(MockHTTPoison, :get, fn _url, _headers ->
-        {:ok,
-         %HTTPoison.Response{
-           status_code: 200,
-           headers: [],
-           body:
-             Jason.encode!([
-               %{
-                 "id" => @line_item_url,
-                 "label" => "Homework 1",
-                 "scoreMaximum" => 100,
-                 "resourceId" => "res-1"
-               }
-             ])
-         }}
-      end)
-
-      assert {:ok, [%LineItem{}]} = AGS.fetch_line_items(@line_items_url, access_token)
-    end
-
-    test "fetch_or_create_line_item/5 finds existing item", %{
-      access_token: access_token,
-      maximum_score_provider: maximum_score_provider
-    } do
-      expect(MockHTTPoison, :get, fn url, _headers ->
-        assert String.contains?(url, "resource_id=9876")
-
-        {:ok,
-         %HTTPoison.Response{
-           status_code: 200,
-           headers: [],
-           body:
-             Jason.encode!([
-               %{
-                 "id" => @line_item_url,
-                 "label" => "Existing",
-                 "scoreMaximum" => 10,
-                 "resourceId" => "9876"
-               }
-             ])
-         }}
-      end)
-
-      assert {:ok, item} =
-               AGS.fetch_or_create_line_item(
-                 @line_items_url,
-                 9876,
-                 maximum_score_provider,
-                 "Existing",
-                 access_token
-               )
-
-      assert item.id == @line_item_url
-    end
-  end
-
   describe "telemetry" do
     setup [:setup_session]
 
@@ -424,31 +348,6 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
     end
   end
 
-  describe "existing helpers" do
-    test "grade_passback_enabled?, has_scope?, required_scopes, and get_line_items_url are stable" do
-      assert AGS.grade_passback_enabled?(@lti_params)
-
-      claim = Map.fetch!(@lti_params, "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint")
-
-      assert AGS.has_scope?(
-               claim,
-               "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly"
-             )
-
-      refute AGS.has_scope?(claim, "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.fake")
-
-      assert AGS.required_scopes() == [
-               "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
-               "https://purl.imsglobal.org/spec/lti-ags/scope/score"
-             ]
-
-      assert AGS.get_line_items_url(@lti_params, %{
-               line_items_service_domain: "https://registration.example.com/lti/something"
-             }) ==
-               "https://registration.example.com/api/lti/courses/8/line_items"
-    end
-  end
-
   defp setup_session(_context) do
     {:ok,
      %{
@@ -465,14 +364,7 @@ defmodule Lti_1p3.Tool.Services.AGSTest do
          token_type: "Bearer",
          expires_in: 3600
        },
-       score: score_fixture(),
-       line_item: %LineItem{
-         id: @line_item_url,
-         scoreMaximum: 10,
-         label: "label",
-         resourceId: "9876"
-       },
-       maximum_score_provider: fn -> 1.0 end
+       score: score_fixture()
      }}
   end
 
