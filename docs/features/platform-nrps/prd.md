@@ -3,72 +3,73 @@
 ## 1. Feature Summary
 - Name: Platform NRPS 2.0 Complete Support
 - Owner: Lti_1p3 Maintainers
-- Last Updated: 2026-03-04
+- Last Updated: 2026-03-05
 - Status: Proposed
 
 ## 2. Problem Statement
-- Current pain: Platform NRPS service behavior is not represented as a dedicated feature with clear contracts.
-- Why now: Platforms need explicit, secure, spec-aligned roster endpoint behavior for interoperable tool access.
+- Current pain: Platform-side NRPS service behavior requires complete implementation guidance for authorization, pagination, and filter handling.
+- Why now: Certification and production tool interoperability require robust roster endpoint behavior.
 
 ### Current State Analysis
-- Existing planning is focused on tool-side roster retrieval.
-- Platform-side membership service authorization/contract design is not isolated.
-- No explicit adapter contract exists for membership storage/source integration.
+- Platform NRPS operations are not fully implemented.
+- Authorization and filter semantics need complete coverage.
+- Tool NRPS will be implemented first and should drive reusable module extraction where duplication appears.
 
 ## 3. Goals and Non-Goals
 ### Goals
-- Implement platform NRPS endpoint/service orchestration with strict scope and context checks.
-- Define provider behaviors for membership retrieval and filtering.
-- Support paginated membership responses with spec-compliant links.
-- Normalize errors, telemetry, and documentation for platform NRPS.
-- Preserve framework-agnostic and adapter-driven architecture.
+- Implement platform NRPS membership listing behavior with scope/context checks.
+- Support pagination and configured filters with deterministic semantics.
+- Return structured errors and telemetry metadata.
+- Reuse modules extracted from tool NRPS when equivalent logic already exists.
+- Publish complete platform NRPS documentation.
 
 ### Non-Goals
-- Built-in SIS synchronization engine.
-- Opinionated member deduplication or institution-specific role mapping defaults.
+- Built-in SIS synchronization.
+- Institution-specific role mapping policy defaults.
 
 ## 4. Users and Primary Use Cases
-- Personas: Platform developers exposing membership services to tools.
+- Personas: Platform developers exposing roster services to tools.
 - Core scenarios:
-  - Authorize context membership scope.
-  - Serve memberships with pagination and supported filters.
-  - Deny unauthorized or mismatched context requests with explicit reasons.
+  - Authorize `contextmembership.readonly` access.
+  - Serve memberships with page and filter controls.
+  - Return explicit denials for unauthorized requests.
 
 ## 5. Functional Requirements
-1. Define platform NRPS membership and page response models.
-2. Define behavior contracts for membership lookup/filter/pagination.
-3. Enforce scope and context/deployment authorization preflight.
-4. Support pagination links and configurable page size limits.
-5. Support role/status/resourceLink filters where configured.
-6. Return structured errors with stable reason atoms and HTTP mapping guidance.
-7. Emit telemetry/logging for request, page size, and denial/error outcomes.
-8. Document all public platform NRPS modules/functions and adapter contracts.
+1. Implement platform NRPS membership and page models.
+2. Enforce scope/deployment/context checks before retrieval.
+3. Support pagination metadata and link generation.
+4. Support configured role/status/resource-link filters.
+5. Return structured errors with stable reason atoms and HTTP mapping.
+6. Emit telemetry/logs for request, result size, denials, and failures.
+7. Extract duplicated helpers from tool NRPS into reusable modules and consume them in platform NRPS.
+8. Document platform NRPS APIs and integration guidance.
 
 ## 6. Non-Functional Requirements
-- Reliability: deterministic page boundaries and repeatable pagination behavior.
-- Performance: bounded query/pagination cost with host-configurable defaults.
-- Security/Compliance: strict scope/context enforcement and PII-aware logging.
-- Documentation: complete ExDoc and platform NRPS guides.
+- Reliability: deterministic page boundaries and repeatable results.
+- Performance: bounded page size and query behavior.
+- Security/Compliance: strict authorization checks and PII-aware logging.
+- Documentation: complete ExDoc and integration guides.
 
 ## 7. Success Metrics
 - Platform NRPS conformance scenarios pass certification matrix.
 - Interoperability verified with at least 2 reference tools.
 - >= 90% coverage for platform NRPS modules.
+- Cross-role duplicate logic is reduced through extracted reusable modules.
 
 ## 8. Dependencies and Constraints
-- Internal: platform token/scope validation, provider behaviors, shared error conventions.
-- External: host app membership data source and filter capability.
-- Constraints: framework-agnostic, no mandatory persistence implementation.
+- Internal dependencies: platform token/scope validation, tool NRPS extracted reusable helpers.
+- External dependencies: host application membership data source behavior.
+- Constraints: framework-agnostic APIs and stable tagged-tuple return shapes.
 
 ## 9. Risks and Mitigations
-- Risk: inconsistent adapter behavior across host apps.
-- Mitigation: strict behavior contract and adapter contract tests.
-- Risk: filter semantics mismatch.
+- Risk: duplicate pagination/filter logic drifts between roles.
+- Mitigation: extract shared utility modules from tool implementation before finalizing platform operations.
+- Risk: filter semantics mismatch across environments.
 - Mitigation: explicit supported filter configuration and deterministic errors.
 
 ## 10. Acceptance Criteria
 1. Given authorized scope/context, platform returns paginated memberships.
-2. Given unauthorized scope/context, platform returns structured authorization errors.
-3. Given filters, supported filters are applied or explicitly rejected.
-4. Given provider contract implementations, integration works without framework lock-in.
-5. Given `mix docs`, platform NRPS docs and guides are complete and current.
+2. Given unsupported or unauthorized requests, platform returns explicit structured errors.
+3. Given duplicate logic already solved in tool NRPS, platform consumes extracted reusable modules.
+4. Given telemetry instrumentation, request/result/denial metrics are emitted.
+5. Given docs generation, platform NRPS API and guide docs are complete.

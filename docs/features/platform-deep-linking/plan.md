@@ -1,70 +1,70 @@
 # Implementation Plan
 
-## Phase 0 - Platform Deep Linking Baseline
+## Phase 0 - Deep Linking Platform Baseline
 ### Deliverables
-- Platform deep-linking requirement matrix and target APIs.
+- Platform deep-linking requirement matrix and target API signatures.
 
 ### Tasks
 - [ ] Map platform deep-linking responsibilities and current gaps.
-- [ ] Finalize request builder and response validator contracts.
-- [ ] Define error reason catalog and compatibility policy options.
-- [ ] Build docs inventory for platform deep-linking workflows.
+- [ ] Review tool deep-linking modules for reusable helper candidates.
+- [ ] Finalize request builder/response validator/content parser contracts.
+- [ ] Finalize platform deep-linking docs inventory.
 
 ### Verification
 - [ ] Requirement matrix approved.
-- [ ] API contracts approved.
+- [ ] Reusable helper candidate list approved.
 
-## Phase 1 - Request Construction APIs
+## Phase 1 - Request and Validation Foundations
 ### Deliverables
-- Platform helper APIs to build deep-linking request context.
+- Request builder, correlation validator foundations, and typed response models.
 
 ### Tasks
-- [ ] Implement request builder for required deep-linking claims/context.
-- [ ] Add validation for required launch/session inputs.
-- [ ] Add unit tests for valid and invalid request construction.
-- [ ] Document host app integration expectations.
+- [ ] Implement request builder with required claim validation.
+- [ ] Implement response claim validation and structured error mapping.
+- [ ] Implement typed response/content item models.
+- [ ] Add unit tests for claim and correlation failure paths.
 
 ### Verification
-- [ ] Request builder tests pass.
-- [ ] Required claim completeness checks pass.
+- [ ] Unit tests pass for request/validation models.
+- [ ] Structured error mapping tests pass.
 
-## Phase 2 - Response Validation and Parsing
+## Phase 2 - Response Parsing and Reuse
 ### Deliverables
-- Response JWT validation and typed content item parsing.
+- Complete response parsing and minimized duplicate logic.
 
 ### Tasks
-- [ ] Implement signature and issuer/audience validation.
-- [ ] Implement nonce/state/data correlation checks.
-- [ ] Implement content item parsing/normalization.
-- [ ] Implement compatibility policy modes for subtype variance.
+- [ ] Implement signature verification and issuer/audience checks.
+- [ ] Implement content item parsing and compatibility behavior.
+- [ ] Extract duplicated helpers from tool deep-linking into reusable modules and adopt those modules in platform deep-linking.
+- [ ] Add integration tests for valid/invalid JWT flows.
 
 ### Verification
-- [ ] Integration tests pass for valid and invalid JWT flows.
-- [ ] Correlation mismatch tests pass.
+- [ ] Integration tests pass for signature/claim/correlation paths.
+- [ ] Duplicated helper implementations are replaced by reusable modules where applicable.
 
 ## Phase 3 - Hardening and Documentation
 ### Deliverables
-- Telemetry/logging and finalized platform deep-linking guides.
+- Production-ready observability and docs.
 
 ### Tasks
 - [ ] Add telemetry events and structured logs.
-- [ ] Add README/docs examples for request and response handling.
-- [ ] Ensure public API `@moduledoc`/`@doc`/`@spec` coverage.
-- [ ] Validate documentation examples.
+- [ ] Validate reusable module usage across tool/platform deep-linking flows.
+- [ ] Update docs with platform deep-linking examples and integration guidance.
+- [ ] Ensure `@moduledoc`, `@doc`, and `@spec` coverage.
 
 ### Verification
 - [ ] Telemetry assertions pass.
-- [ ] `mix docs` completes and guides are current.
+- [ ] `mix docs` completes with current platform deep-linking guides.
 
 ## Phase 4 - Manual QA Acceptance Testing
 ### Deliverables
 - Manual platform deep-linking interoperability report.
 
 ### Tasks
-- [ ] Validate request/response interoperability with at least 2 reference tools.
-- [ ] Validate unsupported subtype handling in strict and tolerant modes.
-- [ ] Validate negative paths (signature/correlation/claim failures).
-- [ ] Record QA outcomes and remediation tasks.
+- [ ] Validate interoperability with at least 2 reference tools.
+- [ ] Validate unsupported subtype handling behavior.
+- [ ] Validate negative paths (signature, claim, correlation failures).
+- [ ] Record QA findings and remediation ownership.
 
 ### Verification
 - [ ] QA report approved.

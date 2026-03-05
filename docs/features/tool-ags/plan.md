@@ -1,72 +1,72 @@
 # Implementation Plan
 
-## Phase 0 - Tool AGS Baseline and Contracts
+## Phase 0 - AGS Tool Baseline
 ### Deliverables
-- Tool AGS requirement matrix and finalized API contracts.
+- AGS tool requirement matrix and finalized API surface.
 
 ### Tasks
-- [ ] Map AGS tool requirements and operation/scope matrix.
-- [ ] Audit current `Lti_1p3.Tool.Services.AGS` gaps and incompatibilities.
-- [ ] Finalize typed models and structured error schema.
-- [ ] Build tool AGS docs inventory for public APIs and guides.
+- [ ] Map AGS tool operations and required scopes.
+- [ ] Audit current implementation and enumerate missing behavior.
+- [ ] Finalize typed models and error reason catalog.
+- [ ] Define candidate utility extraction seams in tool modules.
 
 ### Verification
 - [ ] Requirement matrix approved.
-- [ ] API signatures and reason atom catalog approved.
+- [ ] API signatures and reason atoms approved.
 
-## Phase 1 - Models, Claim Parsing, and Scope Policy
+## Phase 1 - Models, Parsing, and Scope Enforcement
 ### Deliverables
-- Typed endpoint/line item/score/result/page models and scope preflight.
+- Typed structs and deterministic preflight authorization.
 
 ### Tasks
-- [ ] Implement/refresh AGS structs and claim parser.
-- [ ] Implement operation-to-scope policy module.
-- [ ] Replace string errors with structured error maps.
-- [ ] Add unit tests for parsing and scope enforcement.
+- [ ] Implement/refresh endpoint, line item, score, result, and page structs.
+- [ ] Implement claim parser and scope policy.
+- [ ] Normalize all public errors to structured maps.
+- [ ] Add unit tests for parsing/scope/error branches.
 
 ### Verification
-- [ ] Parsing and scope tests pass.
-- [ ] Legacy behavior compatibility tests added where needed.
+- [ ] Unit tests pass for parser, scope policy, and error mapping.
+- [ ] Existing behavior regressions are covered.
 
-## Phase 2 - Full Tool Operation Coverage
+## Phase 2 - Tool AGS Operations
 ### Deliverables
-- Complete tool-side line item, score, and result operations.
+- Full line item, score, and result operation coverage.
 
 ### Tasks
-- [ ] Implement line item list/create/update/delete/read behaviors.
-- [ ] Implement score publish validation and execution.
-- [ ] Implement results retrieval with pagination traversal.
-- [ ] Add timeout handling and retryability classification.
+- [ ] Implement line item list/create/read/update/delete operations.
+- [ ] Implement score posting validation and execution.
+- [ ] Implement result retrieval and pagination traversal.
+- [ ] Implement compatibility profile hooks.
 
 ### Verification
-- [ ] Integration tests cover success and failure branches.
+- [ ] Integration tests pass for success/failure branches.
 - [ ] Pagination and scope matrix tests pass.
 
-## Phase 3 - Hardening and Documentation
+## Phase 3 - Hardening and Extraction Readiness
 ### Deliverables
-- Production-ready telemetry/logging and finalized docs.
+- Production-ready observability plus reusable module extraction plan.
 
 ### Tasks
-- [ ] Add telemetry events, spans, and structured logs.
-- [ ] Implement compatibility policy profiles for LMS quirks.
-- [ ] Update README/docs with AGS tool examples.
-- [ ] Ensure `@moduledoc`, `@doc`, and `@spec` coverage.
+- [ ] Add telemetry events and structured logs.
+- [ ] Document utility candidates with concrete call sites and tests.
+- [ ] Extract proven duplicate helpers into reusable modules where appropriate.
+- [ ] Update docs with tool AGS examples and utility usage notes.
 
 ### Verification
 - [ ] Telemetry assertions pass.
-- [ ] Documentation examples validated.
-- [ ] `mix docs` completes with AGS tool guides up to date.
+- [ ] Reusable helpers are covered by focused unit tests.
+- [ ] `mix docs` completes with current guides.
 
 ## Phase 4 - Manual QA Acceptance Testing
 ### Deliverables
-- Manual tool AGS interoperability report.
+- Manual AGS tool interoperability report.
 
 ### Tasks
-- [ ] Validate line item lifecycle against at least 2 LMS sandboxes.
-- [ ] Validate score publish and result retrieval.
-- [ ] Validate negative paths (scope denial, token expiry, malformed payload).
-- [ ] Capture pass/fail outcomes and remediation backlog.
+- [ ] Validate line item lifecycle in at least 2 LMS sandboxes.
+- [ ] Validate score publish and result retrieval paths.
+- [ ] Validate denial/error paths (scope, token, payload, timeout).
+- [ ] Record QA findings and remediation ownership.
 
 ### Verification
 - [ ] QA report approved.
-- [ ] Critical defects triaged with owners.
+- [ ] Critical defects triaged.

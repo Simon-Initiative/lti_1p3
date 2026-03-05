@@ -3,75 +3,76 @@
 ## 1. Feature Summary
 - Name: Tool NRPS 2.0 Complete Support
 - Owner: Lti_1p3 Maintainers
-- Last Updated: 2026-03-04
+- Last Updated: 2026-03-05
 - Status: Proposed
 
 ## 2. Problem Statement
-- Current pain: Tool NRPS support is incomplete for scope correctness, paging, and filtering.
-- Why now: Tool roster synchronization requires spec-compliant NRPS behavior for certification.
+- Current pain: Tool NRPS behavior is incomplete for scope correctness, filtering, and page traversal.
+- Why now: Certification and production roster synchronization require complete NRPS behavior.
 
 ### Current State Analysis
-- Current client is single-page oriented and appends fixed limits.
-- Required scope handling has correctness gaps.
-- Error handling lacks typed reason metadata.
-- Tests do not fully cover pagination/filter and failure semantics.
+- Current implementation is single-page oriented.
+- Scope handling needs stricter correctness.
+- Error shapes and retry metadata are inconsistent.
+- Coverage is incomplete across pagination and filter paths.
 
 ## 3. Goals and Non-Goals
 ### Goals
-- Deliver complete tool NRPS retrieval with pagination and filter support.
-- Correct and enforce required NRPS scope URL checks.
-- Normalize memberships to typed structs with role helpers.
-- Provide page, stream, and eager-fetch APIs.
-- Publish complete ExDoc and NRPS tool guides.
+- Deliver full tool NRPS retrieval with pagination and filter support.
+- Enforce required NRPS scopes per operation.
+- Normalize memberships into typed structures.
+- Provide page, stream, and eager full-fetch APIs.
+- Define reusable module extraction points during tool implementation for platform reuse.
 
 ### Non-Goals
 - Built-in roster persistence.
-- Institution-specific enrollment reconciliation workflows.
+- Institution-specific roster reconciliation workflows.
 
 ## 4. Users and Primary Use Cases
-- Personas: Tool developers reading class rosters.
+- Personas: Tool developers retrieving class rosters.
 - Core scenarios:
   - Parse NRPS launch claims and validate scopes.
   - Fetch memberships across pages.
-  - Filter by supported role/status/resource-link options.
+  - Apply supported role/status/resource-link filters.
 
 ## 5. Functional Requirements
-1. Parse NRPS claim into typed endpoint config.
-2. Validate required NRPS scope URLs per operation.
-3. Support `Link` header page traversal.
-4. Support optional filter/query parameters.
+1. Parse NRPS launch claim into typed endpoint configuration.
+2. Validate required NRPS scopes before requests.
+3. Support `Link` header traversal for multi-page responses.
+4. Support optional query filters and limits.
 5. Normalize memberships to typed structs.
-6. Provide stream and eager full-fetch helpers.
-7. Return structured error maps with retryability hints.
+6. Provide stream and eager fetch-all APIs.
+7. Return structured errors with retryability hints.
 8. Emit telemetry for requests, pages, and failures.
-9. Document all public NRPS tool modules/functions.
-10. Add/update NRPS tool guides under `docs/`.
+9. Document all public tool NRPS APIs.
+10. Identify duplicate-prone logic and define extractable boundaries for later platform reuse.
 
 ## 6. Non-Functional Requirements
-- Reliability: bounded retry policy for transient failures.
+- Reliability: deterministic paging behavior and bounded retries.
 - Performance: avoid unbounded memory growth on large rosters.
-- Security/Compliance: scope enforcement and optional PII redaction.
-- Documentation: full ExDoc and guide coverage.
+- Security/Compliance: strict scope checks and configurable PII redaction.
+- Documentation: complete ExDoc and guide coverage.
 
 ## 7. Success Metrics
 - Tool NRPS conformance scenarios pass certification matrix.
-- Roster retrieval succeeds across at least 2 LMS sandboxes.
+- Interoperability verified with at least 2 LMS sandboxes.
 - >= 90% coverage for tool NRPS modules.
+- Reusable utility candidates are documented and tested before platform NRPS implementation starts.
 
 ## 8. Dependencies and Constraints
-- Internal: shared HTTP utilities, role helpers, unified error conventions.
-- External: LMS pagination/filter differences.
-- Constraints: framework-agnostic and persistence-agnostic.
+- Internal dependencies: launch claims, HTTP transport, role helpers.
+- External dependencies: LMS pagination/filter differences.
+- Constraints: framework-agnostic API design and stable tagged-tuple shapes.
 
 ## 9. Risks and Mitigations
-- Risk: LMS pagination variance.
-- Mitigation: tolerant `Link` parser and compatibility policy hooks.
-- Risk: large roster memory pressure.
-- Mitigation: page-streaming API and max-page safeguards.
+- Risk: LMS pagination variance causes brittle traversal.
+- Mitigation: tolerant parser with explicit failure reasons.
+- Risk: large rosters increase memory pressure.
+- Mitigation: stream API and max-page guardrails.
 
 ## 10. Acceptance Criteria
-1. Given valid claim/scope, tool retrieves memberships across all pages.
-2. Given missing/invalid scope, API returns `:insufficient_scope` errors.
-3. Given filters, supported LMS returns filtered memberships.
-4. Given failures, structured errors include operation/status/retryability metadata.
-5. Given `mix docs`, tool NRPS docs are complete and current.
+1. Given valid claim/scope, tool retrieves memberships across pages.
+2. Given missing scope, APIs return `:insufficient_scope` errors.
+3. Given supported filters, memberships are filtered as requested.
+4. Given failures, structured errors include operation/status/retryability.
+5. Given docs generation, tool NRPS API and guide docs are complete.

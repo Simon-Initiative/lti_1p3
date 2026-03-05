@@ -1,70 +1,71 @@
 # Implementation Plan
 
-## Phase 0 - Tool Deep Linking Baseline
+## Phase 0 - Deep Linking Tool Baseline
 ### Deliverables
-- Tool deep-linking requirement matrix and API contracts.
+- Deep-linking tool requirement matrix and target API signatures.
 
 ### Tasks
-- [ ] Map tool deep-linking spec requirements and current gaps.
-- [ ] Finalize request/settings/item/response contracts.
-- [ ] Define reason atom catalog for validation/build failures.
-- [ ] Build docs inventory for tool deep-linking APIs and guides.
+- [ ] Map deep-linking tool requirements and current gaps.
+- [ ] Finalize request/settings/item/response API contracts.
+- [ ] Finalize reason atom catalog for validation/build failures.
+- [ ] Identify utility extraction seams in tool modules.
 
 ### Verification
 - [ ] Requirement matrix approved.
-- [ ] API contracts approved.
+- [ ] API signatures and reason atoms approved.
 
-## Phase 1 - Request Validation and Dispatch
+## Phase 1 - Request Validation and Settings
 ### Deliverables
-- `LtiDeepLinkingRequest` support integrated in tool launch path.
+- Launch validation and typed settings parsing.
 
 ### Tasks
 - [ ] Implement request validator and settings parser.
-- [ ] Integrate deep-linking validator into message dispatch.
-- [ ] Add claim-level positive and negative tests.
-- [ ] Normalize validation errors to structured maps.
+- [ ] Integrate deep-linking request validation into dispatch.
+- [ ] Normalize errors to structured maps.
+- [ ] Add unit tests for positive and negative claim paths.
 
 ### Verification
-- [ ] Dispatch tests pass.
-- [ ] Claim validation tests pass.
+- [ ] Dispatch and validation tests pass.
+- [ ] Structured error mapping tests pass.
 
 ## Phase 2 - Content Items and Response Builder
 ### Deliverables
-- Typed content item API and signed deep-linking response generation.
+- Typed content item API and signed deep-link response generation.
 
 ### Tasks
 - [ ] Implement content item builders and subtype validation.
-- [ ] Implement response claim assembly and data correlation handling.
-- [ ] Implement JWT signing helper integration.
-- [ ] Add compatibility controls for subtype restrictions.
+- [ ] Implement response claim assembly and conditional `data` handling.
+- [ ] Integrate JWT signing helper.
+- [ ] Implement compatibility profile hooks.
 
 ### Verification
-- [ ] Integration tests pass for response token claims/signatures.
-- [ ] Unsupported subtype tests pass.
+- [ ] Integration tests pass for response claims/signatures.
+- [ ] Unsupported subtype behavior tests pass.
 
-## Phase 3 - Hardening and Documentation
+## Phase 3 - Hardening and Extraction Readiness
 ### Deliverables
-- Telemetry/logging and complete tool deep-linking docs.
+- Production-ready observability plus reusable module extraction plan.
 
 ### Tasks
 - [ ] Add telemetry events and structured logs.
-- [ ] Add README/docs examples for request and response flows.
-- [ ] Ensure `@moduledoc`, `@doc`, and `@spec` coverage.
-- [ ] Validate docs examples in tests.
+- [ ] Document utility candidates with concrete call sites and tests.
+- [ ] Extract proven duplicate helpers into reusable modules where appropriate.
+- [ ] Update docs with tool deep-linking examples and utility usage notes.
 
 ### Verification
 - [ ] Telemetry assertions pass.
-- [ ] `mix docs` completes with guides current.
+- [ ] Reusable helpers are covered by focused unit tests.
+- [ ] `mix docs` completes with current guides.
 
 ## Phase 4 - Manual QA Acceptance Testing
 ### Deliverables
-- Manual tool deep-linking interoperability report.
+- Manual deep-linking tool interoperability report.
 
 ### Tasks
-- [ ] Validate request handling against at least 2 LMS sandboxes.
+- [ ] Validate tool behavior against at least 2 LMS sandboxes.
 - [ ] Validate response submission with representative item types.
 - [ ] Validate negative paths (missing claims, disabled types, bad signatures).
-- [ ] Record QA outcomes and remediation backlog.
+- [ ] Record QA findings and remediation ownership.
 
 ### Verification
 - [ ] QA report approved.

@@ -1,33 +1,39 @@
 # Functional Design Document
 
 ## 1. Design Overview
-- Scope covered: Platform deep-link request construction, response JWT validation, item normalization, observability.
+- Scope covered: Platform deep-link request building, response validation, content item parsing, observability.
 - Assumptions:
-  - Platform launch/session context carries expected nonce/state/data values.
-  - Shared JWT verification utilities are available.
+  - Platform launch/session context includes expected correlation values.
+  - Tool deep-linking implementation can provide extracted reusable helper modules.
 
 ## 2. System Context and Boundaries
 - In-scope components:
-  - Platform deep-link request helper APIs.
-  - Response validator and claim/correlation checks.
-  - Typed response/content item normalization.
+  - `Lti_1p3.Platform.DeepLinking.RequestBuilder`
+  - `Lti_1p3.Platform.DeepLinking.ResponseValidator`
+  - `Lti_1p3.Platform.DeepLinking.ContentItemParser`
+  - `Lti_1p3.Platform.DeepLinking.Errors`
+  - Adoption of extracted reusable helper modules where duplication exists.
 - Out-of-scope components:
-  - Tool-side deep-link response generation.
+  - Tool response generation behavior.
   - Host app persistence/UI workflows.
 
 ## 3. Architecture
 - High-level flow:
-  - Build request context -> send launch via host app -> receive response JWT -> verify signature/claims -> parse items -> return normalized struct.
-- Module responsibilities:
+  - Build request claims/context -> receive response JWT -> verify signature and claims -> validate correlation -> parse items -> return normalized response.
+- Context/module responsibilities:
   - `Lti_1p3.Platform.DeepLinking.RequestBuilder`
   - `Lti_1p3.Platform.DeepLinking.ResponseValidator`
   - `Lti_1p3.Platform.DeepLinking.ContentItemParser`
   - `Lti_1p3.Platform.DeepLinking.CompatibilityPolicy`
+  - `Lti_1p3.Platform.DeepLinking.Errors`
+  - Reused helpers extracted from tool implementation (for example: claim correlation and content item normalization helpers).
+- Supervision tree impact:
+  - No new long-lived processes.
 
 ## 4. Data Design
 - Schema changes: none.
-- Data lifecycle: deep-link request/response data is caller-managed unless persisted by host app.
-- Migration strategy: additive APIs with migration notes for existing helper replacements.
+- Data lifecycle: request/response/item structs are request-scoped unless host app persists.
+- Migration/backfill strategy: additive API and helper extraction changes with migration notes.
 
 ## 5. Interfaces and Contracts
 - `build_request(context, opts) -> {:ok, %DeepLinkingPlatformRequest{}} | {:error, error}`
@@ -35,36 +41,28 @@
 - `parse_content_items(claims, opts) -> {:ok, [%ContentItem{}]} | {:error, error}`
 
 ## 6. Runtime Behavior
-- Stateless helper and validator modules.
-- No long-lived processes or retries in core validation flow.
-- Safe for concurrent validation across many launches.
+- Stateless validation/build operations.
+- Concurrent-safe for many simultaneous launches.
+- No long-lived processes or retries in core flow.
 
 ## 7. Security and Compliance
-- Strict signature validation and issuer/audience checks.
-- Correlation checks for `nonce`, `state`, and `data` where applicable.
-- Structured audit logs for rejects with redacted sensitive fields.
+- Strict signature verification and issuer/audience checks.
+- Enforce nonce/state/data correlation rules.
+- Redact sensitive values from logs and telemetry metadata.
 
 ## 8. Observability and Operations
-- Metrics: `platform_deep_linking.request.build_count`, `platform_deep_linking.response.valid_count`, `platform_deep_linking.response.invalid_count`.
-- Logs: issuer/client_id, correlation result, item count, reason on failure.
-- Tracing: telemetry spans around build/validate operations.
+- Metrics:
+  - `platform_deep_linking.request.build_count`
+  - `platform_deep_linking.response.valid_count`
+  - `platform_deep_linking.response.invalid_count`
+- Logs: issuer/client_id, correlation result, item count, reason.
+- Tracing: telemetry spans around request build and response validation.
 
 ## 9. Testing Strategy
-- Unit: claim/correlation validation rules and content item normalization.
-- Integration: signed response token verification paths.
-- Contract: expected input validation for request/session correlation.
-- End-to-end: platform request through tool response consumption.
+- Unit: claim validation, correlation checks, item normalization, error mapping.
+- Integration: signed response token validation paths.
+- End-to-end: request creation through response consumption.
+- Load/failure: high-volume response validation and malformed payload handling.
 
-## 10. Documentation Strategy
-- ExDoc on all public platform deep-linking modules/functions.
-- Guides for initiating deep-linking flows and validating responses.
-- Merge gate includes docs generation and example checks.
-
-## 11. Decisions
-1. Correlation strictness:
-Decision: enforce strict `state` and conditional `data` matching.
-Implementation impact: response validation fails with explicit reasons on mismatch.
-
-2. Unsupported content item handling:
-Decision: configurable strict vs tolerant mode.
-Implementation impact: strict mode fails fast; tolerant mode returns parsed supported subset with warnings.
+## 10. Open Questions
+- Which extracted tool deep-linking helpers should be adopted before platform phase 2 to maximize reuse with minimal churn?

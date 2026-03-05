@@ -1,69 +1,69 @@
 # Implementation Plan
 
-## Phase 0 - Platform AGS Requirements and Contracts
+## Phase 0 - AGS Platform Baseline
 ### Deliverables
-- Platform AGS conformance matrix and provider contract draft.
+- AGS platform requirement matrix and finalized API surface.
 
 ### Tasks
-- [ ] Define platform AGS operation matrix and required scopes.
-- [ ] Draft provider behavior contracts for line items, scores, and results.
-- [ ] Define structured error reasons and HTTP mapping guidance.
-- [ ] Build docs inventory for platform AGS API and adapter guidance.
+- [ ] Define operation/scope/context authorization matrix.
+- [ ] Review tool AGS modules for reusable helper candidates.
+- [ ] Finalize platform typed models and error reason catalog.
+- [ ] Finalize platform AGS docs inventory.
 
 ### Verification
-- [ ] Matrix and scope policy approved.
-- [ ] Provider contract approved.
+- [ ] Requirement matrix approved.
+- [ ] Reusable helper candidate list approved.
 
-## Phase 1 - Authorization and Core Contracts
+## Phase 1 - Authorization and Core Models
 ### Deliverables
-- Scope/context/deployment authorization pipeline and provider behaviors.
+- Authorization pipeline and model definitions.
 
 ### Tasks
-- [ ] Implement centralized authorization helpers.
-- [ ] Add provider behavior modules and default validation utilities.
-- [ ] Implement common AGS platform models.
-- [ ] Add unit tests for authorization and contract checks.
+- [ ] Implement scope/context/deployment policy helpers.
+- [ ] Implement core platform AGS structs.
+- [ ] Normalize error mapping for all public operations.
+- [ ] Add unit tests for authorization and error paths.
 
 ### Verification
-- [ ] Authorization tests pass.
-- [ ] Contract tests validate required adapter callbacks.
+- [ ] Authorization and error tests pass.
+- [ ] Model serialization/validation tests pass.
 
-## Phase 2 - Platform Operations
+## Phase 2 - Operations and Reuse
 ### Deliverables
-- Line item, score, and result platform service operations.
+- Complete platform line item/score/result operations with minimized duplication.
 
 ### Tasks
-- [ ] Implement line item list/create/update/delete orchestration.
-- [ ] Implement score ingestion operation.
-- [ ] Implement result retrieval with pagination support.
-- [ ] Normalize all operation errors to structured maps.
+- [ ] Implement line item list/create/read/update/delete operations.
+- [ ] Implement score ingestion and result retrieval operations.
+- [ ] Extract duplicated logic from tool AGS into reusable modules and replace duplicate platform logic with those modules.
+- [ ] Add integration tests for success and denial paths.
 
 ### Verification
-- [ ] Integration tests pass for success and denial paths.
-- [ ] Pagination behavior tests pass.
+- [ ] Integration tests pass for all operations.
+- [ ] Duplicated helper implementations are replaced by reusable modules where applicable.
 
 ## Phase 3 - Hardening and Documentation
 ### Deliverables
-- Telemetry/logging and complete platform AGS documentation.
+- Production-ready observability and docs.
 
 ### Tasks
-- [ ] Add telemetry events and structured audit logs.
-- [ ] Provide reference adapter contract examples.
-- [ ] Update README/docs with platform AGS integration guidance.
-- [ ] Ensure public API `@moduledoc`/`@doc`/`@spec` coverage.
+- [ ] Add telemetry events and structured logs.
+- [ ] Validate reusable module usage across tool/platform AGS paths.
+- [ ] Update docs with platform AGS examples and integration guidance.
+- [ ] Ensure `@moduledoc`, `@doc`, and `@spec` coverage.
 
 ### Verification
 - [ ] Telemetry assertions pass.
-- [ ] `mix docs` completes and guides are current.
+- [ ] `mix docs` completes with current platform AGS guides.
 
 ## Phase 4 - Manual QA Acceptance Testing
 ### Deliverables
-- Manual platform AGS interoperability report.
+- Manual AGS platform interoperability report.
 
 ### Tasks
-- [ ] Validate platform AGS endpoints with at least 2 reference tools.
+- [ ] Validate platform AGS behavior with at least 2 reference tools.
 - [ ] Validate negative paths (scope denial, bad context, malformed payload).
-- [ ] Validate provider adapter edge cases.
+- [ ] Validate reusable module behavior in tool and platform AGS flows.
 - [ ] Record QA findings and remediation ownership.
 
 ### Verification
