@@ -257,7 +257,7 @@ defmodule Lti_1p3.Tool.Services.NRPSTest do
       end)
 
       assert {:error, "Error retrieving memberships"} =
-               NRPS.fetch_memberships(@context_memberships_url, access_token)
+               apply(NRPS, :fetch_memberships, [@context_memberships_url, access_token])
     end
   end
 
