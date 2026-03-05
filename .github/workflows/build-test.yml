@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - master
+      - release-v1.0.0
 
 jobs:
   build-test:
