@@ -203,6 +203,28 @@ end
 
 If successful, `validate_launch` returns a normalized launch struct with claims, message type, and deployment metadata.
 
+#### Tool Deep Linking Responses
+
+For `LtiDeepLinkingRequest` launches, use the deep-linking API to validate the deep-linking claim set, build content items, and generate a signed response JWT:
+
+```elixir
+with {:ok, request} <- Lti_1p3.Tool.validate_deep_linking_request(launch.claims),
+     {:ok, item} <-
+       Lti_1p3.Tool.deep_linking_content_item(:lti_resource_link, %{
+         "url" => "https://tool.example.com/resources/42",
+         "title" => "Homework 1"
+       }),
+     {:ok, %{jwt: jwt, return_url: return_url}} <-
+       Lti_1p3.Tool.build_deep_linking_response(request, [item]) do
+  submit_deep_linking_response(conn, return_url, jwt)
+else
+  {:error, %{reason: reason, msg: msg}} ->
+    render(conn, "lti_error.html", reason: reason, msg: msg)
+end
+```
+
+For full examples, see [`docs/tool_deep_linking_guide.md`](docs/tool_deep_linking_guide.md).
+
 If you are using Phoenix, don't forget to add these endpoints to your `router.ex`. The LTI 1.3 specification says the `login` request can be sent as either a `GET` or `POST`, so we must support both methods.
 
 ```elixir

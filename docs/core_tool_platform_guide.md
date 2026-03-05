@@ -24,6 +24,26 @@ This guide documents the unified core APIs introduced for LTI 1.3 tool and platf
 {:error, %{reason: :invalid_nonce, stage: :nonce, msg: "Duplicate nonce", details: %{}}}
 ```
 
+### Validate deep-linking request claims
+
+```elixir
+{:ok, request} =
+  Lti_1p3.Tool.validate_deep_linking_request(launch.claims)
+```
+
+### Build and sign a deep-linking response
+
+```elixir
+{:ok, item} =
+  Lti_1p3.Tool.deep_linking_content_item(:lti_resource_link, %{
+    "url" => "https://tool.example.com/resources/42",
+    "title" => "Resource"
+  })
+
+{:ok, %{jwt: jwt, return_url: return_url}} =
+  Lti_1p3.Tool.build_deep_linking_response(request, [item])
+```
+
 ## Platform API
 
 ### Authorize redirect

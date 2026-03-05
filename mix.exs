@@ -81,6 +81,7 @@ defmodule Lti_1p3.MixProject do
         "README.md",
         "docs/lti_1p3_overview.md",
         "docs/core_tool_platform_guide.md",
+        "docs/tool_deep_linking_guide.md",
         "docs/telemetry.md",
         "docs/core_migration_guide.md",
         "docs/provider_adapter_migration.md",

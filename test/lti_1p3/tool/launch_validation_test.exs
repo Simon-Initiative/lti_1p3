@@ -99,7 +99,9 @@ defmodule Lti_1p3.Tool.LaunchValidationTest do
           "LtiDeepLinkingRequest"
         )
         |> Map.put("https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings", %{
-          "deep_link_return_url" => "https://tool.example.com/return"
+          "deep_link_return_url" => "https://tool.example.com/return",
+          "accept_types" => ["ltiResourceLink"],
+          "accept_presentation_document_targets" => ["iframe"]
         })
 
       id_token = generate_id_token(jwk, jwk.kid, claims)
