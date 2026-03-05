@@ -20,6 +20,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - New tool deep-linking modules for request validation, typed settings, content item building, compatibility policy hooks, response signing, and telemetry.
 - Shared deep-linking claim key helper (`Lti_1p3.DeepLinking.ClaimKeys`) for cross-role reuse.
 - Tool deep-linking guide (`docs/tool_deep_linking_guide.md`) and feature implementation artifacts under `docs/features/tool-deep-linking/`.
+- Tool NRPS 2.0 APIs:
+  - `Lti_1p3.Tool.Services.NRPS.from_launch_claim/1`
+  - `Lti_1p3.Tool.Services.NRPS.list_memberships/3`
+  - `Lti_1p3.Tool.Services.NRPS.stream_memberships/3`
+  - `Lti_1p3.Tool.Services.NRPS.fetch_all_memberships/3`
+- New tool NRPS modules for endpoint/page typing, parsing, scope policy, structured errors, telemetry, and HTTP client retry behavior.
+- Shared HTTP helper modules for cross-role reuse:
+  - `Lti_1p3.Services.HTTP.LinkHeader`
+  - `Lti_1p3.Services.HTTP.QueryFilters`
+- Tool NRPS guide (`docs/tool_nrps_guide.md`) and feature artifacts under `docs/features/tool-nrps/`.
 - Stage-based core validation modules for state, registration, JWT, timestamps, deployment, nonce, and message validation.
 - Core telemetry events for validation stages and outcomes.
 - Provider contract conformance tests and migration documentation.
@@ -35,6 +45,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Audience and JWT validation hardening with explicit deterministic failure reasons.
 - Core validation module layout was flattened from `Lti_1p3.Core.Validation.Stages.*` to `Lti_1p3.Core.Validation.*`.
 - Core validation pipelines were simplified to explicit ordered stage calls (removed generic `run_stage` wrapper pattern).
+- Existing `Lti_1p3.Tool.Services.NRPS.fetch_memberships/2` now runs through the stricter NRPS scope/filter/parser pipeline while preserving its legacy tuple shape.
 
 ### Fixed
 

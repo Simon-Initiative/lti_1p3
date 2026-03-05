@@ -4,135 +4,301 @@ defmodule Lti_1p3.Tool.Services.NRPSTest do
   import Mox
 
   alias Lti_1p3.Test.MockHTTPoison
-  alias Lti_1p3.Tool.Services.{AccessToken, NRPS}
+  alias Lti_1p3.Tool.Services.AccessToken
+  alias Lti_1p3.Tool.Services.NRPS
+  alias Lti_1p3.Tool.Services.NRPS.Endpoint
 
   @context_memberships_url "https://lms.example.edu/api/lti/courses/8/names_and_roles"
 
   @lti_params %{
-    "aud" => "10000000000041",
-    "azp" => "10000000000041",
-    "email" => "test@example.edu",
-    "errors" => %{"errors" => %{}},
-    "exp" => 1_604_329_486,
-    "family_name" => "Last",
-    "given_name" => "First",
-    "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint" => %{
-      "errors" => %{"errors" => %{}},
-      "lineitems" => "https://lms.example.edu/api/lti/courses/8/line_items",
-      "scope" => [
-        "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
-        "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly",
-        "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly",
-        "https://purl.imsglobal.org/spec/lti-ags/scope/score"
-      ],
-      "validation_context" => nil
-    },
     "https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice" => %{
       "context_memberships_url" => @context_memberships_url,
-      "service_versions" => ["2.0"]
-    },
-    "https://purl.imsglobal.org/spec/lti/claim/context" => %{
-      "errors" => %{"errors" => %{}},
-      "id" => "07fee64bb0ab0c942859fe07b87f03ea8fefb07b",
-      "label" => "Course",
-      "title" => "Introduction to the Cuisine of Northern Spain",
-      "type" => ["http://purl.imsglobal.org/vocab/lis/v2/course#CourseOffering"],
-      "validation_context" => nil
-    },
-    "https://purl.imsglobal.org/spec/lti/claim/custom" => %{},
-    "https://purl.imsglobal.org/spec/lti/claim/deployment_id" =>
-      "77:07fee64bb0ab0c942859fe07b87f03ea8fefb07b",
-    "https://purl.imsglobal.org/spec/lti/claim/launch_presentation" => %{
-      "document_target" => "iframe",
-      "errors" => %{"errors" => %{}},
-      "height" => 400,
-      "locale" => "en",
-      "return_url" =>
-        "https://lms.example.edu/courses/8/external_content/success/external_tool_dialog",
-      "validation_context" => nil,
-      "width" => 800
-    },
-    "https://purl.imsglobal.org/spec/lti/claim/lis" => %{
-      "course_offering_sourcedid" => nil,
-      "errors" => %{"errors" => %{}},
-      "person_sourcedid" => nil,
-      "validation_context" => nil
-    },
-    "https://purl.imsglobal.org/spec/lti/claim/message_type" => "LtiResourceLinkRequest",
-    "https://purl.imsglobal.org/spec/lti/claim/resource_link" => %{
-      "description" => nil,
-      "errors" => %{"errors" => %{}},
-      "id" => "07fee64bb0ab0c942859fe07b87f03ea8fefb07b",
-      "title" => nil,
-      "validation_context" => nil
-    },
-    "https://purl.imsglobal.org/spec/lti/claim/roles" => [
-      "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor",
-      "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student",
-      "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor",
-      "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner",
-      "http://purl.imsglobal.org/vocab/lis/v2/system/person#User"
-    ],
-    "https://purl.imsglobal.org/spec/lti/claim/target_link_uri" =>
-      "https://5af12c1dbcd4.ngrok.io/lti/launch",
-    "https://purl.imsglobal.org/spec/lti/claim/tool_platform" => %{
-      "errors" => %{"errors" => %{}},
-      "guid" => "8865aa05b4b79b64a91a86042e43af5ea8ae79eb.lms.example.edu",
-      "name" => "Open Learning Initiative Admin",
-      "product_family_code" => "canvas",
-      "validation_context" => nil,
-      "version" => "cloud"
-    },
-    "https://purl.imsglobal.org/spec/lti/claim/version" => "1.3.0",
-    "iat" => 1_604_325_886,
-    "iss" => "https://lms.example.edu",
-    "locale" => "en",
-    "name" => "Test Person",
-    "nonce" => "67d025e8-f3ca-439f-bad2-a4ef450f23a4",
-    "picture" => "https://lms.example.edu/images/messages/avatar-50.png",
-    "sub" => "c36c3c87-993f-4d2e-9e22-e47d5d2637ae"
+      "service_versions" => ["2.0"],
+      "scope" => [
+        "https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly"
+      ]
+    }
   }
 
-  describe "nrps" do
-    setup [:setup_session]
+  setup :verify_on_exit!
 
-    test "access to lti params is correct" do
-      assert NRPS.nrps_enabled?(@lti_params)
-
-      assert NRPS.get_context_memberships_url(@lti_params) ==
-               @context_memberships_url
+  describe "from_launch_claim/1" do
+    test "returns typed endpoint" do
+      assert {:ok, endpoint} = NRPS.from_launch_claim(@lti_params)
+      assert endpoint.context_memberships_url == @context_memberships_url
+      assert endpoint.service_versions == ["2.0"]
+      assert endpoint.scopes == NRPS.required_scopes()
     end
 
-    test "nrps fetch memberships set headers correctly", %{
-      access_token: access_token
-    } do
-      expect(MockHTTPoison, :get, fn _url, headers ->
+    test "returns structured error for missing claim" do
+      assert {:error, %{reason: :missing_nrps_claim}} = NRPS.from_launch_claim(%{})
+    end
+  end
+
+  describe "list_memberships/3" do
+    setup [:setup_session]
+
+    test "applies filter opts and parses page metadata", %{access_token: access_token} do
+      expect(MockHTTPoison, :get, fn url, headers ->
+        assert url ==
+                 "#{@context_memberships_url}?limit=25&role=Instructor&status=Active"
+
         assert [
                  {"Content-Type", "application/json"},
                  {"Authorization", "Bearer fake_token"},
                  {"Accept", "application/vnd.ims.lti-nrps.v2.membershipcontainer+json"}
                ] == headers
 
-        {:ok, %HTTPoison.Response{status_code: 200, body: "{\"members\": []}"}}
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           headers: [
+             {"Link",
+              "<https://lms.example.edu/api/lti/courses/8/names_and_roles?page=2>; rel=\"next\""}
+           ],
+           body:
+             Jason.encode!(%{
+               "members" => [
+                 %{
+                   "status" => "Active",
+                   "name" => "Test Person",
+                   "picture" => nil,
+                   "given_name" => "Test",
+                   "middle_name" => nil,
+                   "family_name" => "Person",
+                   "email" => "test@example.edu",
+                   "user_id" => "u-1",
+                   "roles" => [
+                     "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
+                   ]
+                 }
+               ]
+             })
+         }}
       end)
 
-      {:ok, _response} =
-        NRPS.fetch_memberships(
-          @context_memberships_url,
-          access_token
-        )
+      assert {:ok, page} =
+               NRPS.list_memberships(nrps_endpoint(), access_token,
+                 limit: 25,
+                 role: "Instructor",
+                 status: "Active"
+               )
+
+      assert page.page_index == 1
+      assert page.next_url == "https://lms.example.edu/api/lti/courses/8/names_and_roles?page=2"
+      assert Enum.map(page.memberships, & &1.roles) == [["instructor"]]
     end
+
+    test "returns insufficient_scope for missing scope", %{no_scope_access_token: access_token} do
+      assert {:error, %{reason: :insufficient_scope}} =
+               NRPS.list_memberships(nrps_endpoint(), access_token)
+    end
+
+    test "retries retryable errors when retry_count is configured", %{access_token: access_token} do
+      expect(MockHTTPoison, :get, 2, fn _url, _headers ->
+        if Process.get(:nrps_retry_seen) do
+          {:ok,
+           %HTTPoison.Response{
+             status_code: 200,
+             headers: [],
+             body: Jason.encode!(%{"members" => []})
+           }}
+        else
+          Process.put(:nrps_retry_seen, true)
+          {:ok, %HTTPoison.Response{status_code: 503, body: ""}}
+        end
+      end)
+
+      assert {:ok, page} = NRPS.list_memberships(nrps_endpoint(), access_token, retry_count: 1)
+      assert page.memberships == []
+    end
+  end
+
+  describe "fetch_all_memberships/3" do
+    setup [:setup_session]
+
+    test "traverses multiple pages", %{access_token: access_token} do
+      expect(MockHTTPoison, :get, fn url, _headers ->
+        assert url == @context_memberships_url
+
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           headers: [
+             {"Link",
+              "<https://lms.example.edu/api/lti/courses/8/names_and_roles?page=2>; rel=\"next\""}
+           ],
+           body: Jason.encode!(%{"members" => [member("u-1", "Instructor")]})
+         }}
+      end)
+
+      expect(MockHTTPoison, :get, fn url, _headers ->
+        assert url == "https://lms.example.edu/api/lti/courses/8/names_and_roles?page=2"
+
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           headers: [],
+           body: Jason.encode!(%{"members" => [member("u-2", "Learner")]})
+         }}
+      end)
+
+      assert {:ok, memberships} = NRPS.fetch_all_memberships(nrps_endpoint(), access_token)
+      assert Enum.map(memberships, & &1.user_id) == ["u-1", "u-2"]
+    end
+
+    test "enforces max_pages guard", %{access_token: access_token} do
+      expect(MockHTTPoison, :get, fn _url, _headers ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           headers: [
+             {"Link",
+              "<https://lms.example.edu/api/lti/courses/8/names_and_roles?page=2>; rel=\"next\""}
+           ],
+           body: Jason.encode!(%{"members" => [member("u-1", "Instructor")]})
+         }}
+      end)
+
+      assert {:error, %{reason: :max_pages_exceeded}} =
+               NRPS.fetch_all_memberships(nrps_endpoint(), access_token, max_pages: 1)
+    end
+  end
+
+  describe "stream_memberships/3" do
+    setup [:setup_session]
+
+    test "streams members across pages", %{access_token: access_token} do
+      expect(MockHTTPoison, :get, fn _url, _headers ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           headers: [
+             {"Link",
+              "<https://lms.example.edu/api/lti/courses/8/names_and_roles?page=2>; rel=\"next\""}
+           ],
+           body: Jason.encode!(%{"members" => [member("u-1", "Instructor")]})
+         }}
+      end)
+
+      expect(MockHTTPoison, :get, fn _url, _headers ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           headers: [],
+           body: Jason.encode!(%{"members" => [member("u-2", "Learner")]})
+         }}
+      end)
+
+      results = NRPS.stream_memberships(nrps_endpoint(), access_token) |> Enum.to_list()
+
+      assert Enum.map(results, & &1.user_id) == ["u-1", "u-2"]
+    end
+  end
+
+  describe "telemetry" do
+    setup [:setup_session]
+
+    test "emits request/page/error telemetry events", %{access_token: access_token} do
+      parent = self()
+
+      handler_id = "nrps-test-handler-#{System.unique_integer([:positive])}"
+
+      :ok =
+        :telemetry.attach_many(
+          handler_id,
+          [
+            [:lti_1p3, :tool, :nrps, :request],
+            [:lti_1p3, :tool, :nrps, :page],
+            [:lti_1p3, :tool, :nrps, :membership],
+            [:lti_1p3, :tool, :nrps, :error]
+          ],
+          fn event, measurements, metadata, _config ->
+            send(parent, {:telemetry_event, event, measurements, metadata})
+          end,
+          %{}
+        )
+
+      on_exit(fn -> :telemetry.detach(handler_id) end)
+
+      expect(MockHTTPoison, :get, fn _url, _headers ->
+        {:ok, %HTTPoison.Response{status_code: 500, body: ""}}
+      end)
+
+      assert {:error, %{reason: :request_failed}} =
+               NRPS.list_memberships(nrps_endpoint(), access_token)
+
+      assert_receive {:telemetry_event, [:lti_1p3, :tool, :nrps, :request], %{count: 1}, _}
+      assert_receive {:telemetry_event, [:lti_1p3, :tool, :nrps, :error], %{count: 1}, _}
+
+      expect(MockHTTPoison, :get, fn _url, _headers ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           headers: [],
+           body: Jason.encode!(%{"members" => [member("u-1", "Instructor")]})
+         }}
+      end)
+
+      assert {:ok, _} = NRPS.list_memberships(nrps_endpoint(), access_token)
+
+      assert_receive {:telemetry_event, [:lti_1p3, :tool, :nrps, :page], %{count: 1}, _}
+
+      assert_receive {:telemetry_event, [:lti_1p3, :tool, :nrps, :membership], %{count: 1}, _}
+    end
+  end
+
+  describe "legacy fetch_memberships/2" do
+    setup [:setup_session]
+
+    test "returns string error tuple shape on failure", %{access_token: access_token} do
+      expect(MockHTTPoison, :get, fn _url, _headers ->
+        {:ok, %HTTPoison.Response{status_code: 401, body: ""}}
+      end)
+
+      assert {:error, "Error retrieving memberships"} =
+               NRPS.fetch_memberships(@context_memberships_url, access_token)
+    end
+  end
+
+  defp nrps_endpoint do
+    %Endpoint{
+      context_memberships_url: @context_memberships_url,
+      scopes: NRPS.required_scopes(),
+      service_versions: ["2.0"]
+    }
   end
 
   defp setup_session(_context) do
     access_token = %AccessToken{
       scope:
-        "https://purl.imsglobal.org/spec/lti-ags/scope/score https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly",
+        "https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly https://purl.imsglobal.org/spec/lti-ags/scope/score",
       access_token: "fake_token",
       token_type: "Bearer",
       expires_in: 3_600
     }
 
-    {:ok, %{access_token: access_token}}
+    no_scope_access_token = %AccessToken{
+      scope: "https://purl.imsglobal.org/spec/lti-ags/scope/score",
+      access_token: "fake_token",
+      token_type: "Bearer",
+      expires_in: 3_600
+    }
+
+    {:ok, %{access_token: access_token, no_scope_access_token: no_scope_access_token}}
+  end
+
+  defp member(user_id, role) do
+    %{
+      "status" => "Active",
+      "name" => "Test Person",
+      "picture" => nil,
+      "given_name" => "Test",
+      "middle_name" => nil,
+      "family_name" => "Person",
+      "email" => "test@example.edu",
+      "user_id" => user_id,
+      "roles" => ["http://purl.imsglobal.org/vocab/lis/v2/membership##{role}"]
+    }
   end
 end

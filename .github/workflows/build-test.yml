@@ -4,9 +4,11 @@ on:
   pull_request:
     branches:
       - master
+      - release-v1.0.0
   push:
     branches:
       - master
+      - release-v1.0.0
 
 jobs:
   build-test:
