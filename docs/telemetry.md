@@ -62,3 +62,22 @@ The library also logs stage/outcome summaries via `Logger`. Client apps can cont
 
 - Event names are considered part of the public observability contract.
 - Measurements/metadata may gain additional fields in future minor releases.
+
+## Tool Service Events
+
+This library also emits tool-service telemetry for NRPS and AGS flows.
+
+Tool AGS events:
+
+- `[:lti_1p3, :tool, :ags, :request]`
+- `[:lti_1p3, :tool, :ags, :line_item]`
+- `[:lti_1p3, :tool, :ags, :result]`
+- `[:lti_1p3, :tool, :ags, :error]`
+- `[:lti_1p3, :tool, :ags, :scope_denied]`
+
+Tool NRPS events:
+
+- `[:lti_1p3, :tool, :nrps, :request]`
+- `[:lti_1p3, :tool, :nrps, :page]`
+- `[:lti_1p3, :tool, :nrps, :membership]`
+- `[:lti_1p3, :tool, :nrps, :error]`

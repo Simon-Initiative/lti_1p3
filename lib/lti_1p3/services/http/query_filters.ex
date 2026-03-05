@@ -3,7 +3,7 @@ defmodule Lti_1p3.Services.HTTP.QueryFilters do
   Query filter normalization and URL composition helpers.
   """
 
-  @allowed_filters [:role, :limit, :resource_link_id, :status]
+  @allowed_filters [:role, :limit, :resource_link_id, :status, :resource_id, :tag, :user_id]
 
   @spec normalize(keyword() | map()) :: {:ok, map()} | {:error, atom()}
   def normalize(filters) when filters in [nil, []], do: {:ok, %{}}

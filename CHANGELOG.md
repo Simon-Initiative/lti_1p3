@@ -30,6 +30,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   - `Lti_1p3.Services.HTTP.LinkHeader`
   - `Lti_1p3.Services.HTTP.QueryFilters`
 - Tool NRPS guide (`docs/tool_nrps_guide.md`) and feature artifacts under `docs/features/tool-nrps/`.
+- Tool AGS 2.0 APIs:
+  - `Lti_1p3.Tool.Services.AGS.from_launch_claim/1`
+  - `Lti_1p3.Tool.Services.AGS.list_line_items/3`
+  - `Lti_1p3.Tool.Services.AGS.read_line_item/4`
+  - `Lti_1p3.Tool.Services.AGS.create_line_item/4`
+  - `Lti_1p3.Tool.Services.AGS.update_line_item/5`
+  - `Lti_1p3.Tool.Services.AGS.delete_line_item/4`
+  - `Lti_1p3.Tool.Services.AGS.post_score/5`
+  - `Lti_1p3.Tool.Services.AGS.list_results/4`
+  - `Lti_1p3.Tool.Services.AGS.fetch_all_results/4`
+- New tool AGS modules for typed endpoint/page/result modeling, parsing, scope policy, structured errors, compatibility profile hooks, telemetry, and HTTP client retry behavior.
+- Shared HTTP request helper module for cross-service reuse:
+  - `Lti_1p3.Services.HTTP.Request`
+- Tool AGS guide (`docs/tool_ags_guide.md`) and feature artifacts under `docs/features/tool-ags/`.
 - Stage-based core validation modules for state, registration, JWT, timestamps, deployment, nonce, and message validation.
 - Core telemetry events for validation stages and outcomes.
 - Provider contract conformance tests and migration documentation.
@@ -46,6 +60,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Core validation module layout was flattened from `Lti_1p3.Core.Validation.Stages.*` to `Lti_1p3.Core.Validation.*`.
 - Core validation pipelines were simplified to explicit ordered stage calls (removed generic `run_stage` wrapper pattern).
 - Existing `Lti_1p3.Tool.Services.NRPS.fetch_memberships/2` now runs through the stricter NRPS scope/filter/parser pipeline while preserving its legacy tuple shape.
+- Shared query filter normalization now supports AGS filter keys (`resource_id`, `tag`, `user_id`) in addition to NRPS keys.
+
+### Removed
+
+- Legacy Tool AGS compatibility helpers:
+  - `Lti_1p3.Tool.Services.AGS.post_score/3`
+  - `Lti_1p3.Tool.Services.AGS.fetch_line_items/2`
+  - `Lti_1p3.Tool.Services.AGS.create_line_item/5`
+  - `Lti_1p3.Tool.Services.AGS.update_line_item/3`
+  - `Lti_1p3.Tool.Services.AGS.fetch_or_create_line_item/5`
+- Legacy Tool AGS convenience helpers:
+  - `Lti_1p3.Tool.Services.AGS.grade_passback_enabled?/1`
+  - `Lti_1p3.Tool.Services.AGS.get_line_items_url/2`
+  - `Lti_1p3.Tool.Services.AGS.has_scope?/2`
+  - `Lti_1p3.Tool.Services.AGS.required_scopes/0`
 
 ### Fixed
 
@@ -56,9 +85,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 Required changes:
 
-- None
+- Migrate any legacy Tool AGS helper usage to typed AGS APIs.
+- Update token scope requests to use `Lti_1p3.Tool.Services.AGS.required_scopes/1`.
 
 Upgrade steps:
 
 1. Update to `lti_1p3` `1.0.0`.
-2. Run your normal validation suite (`mix test` and integration checks).
+2. Replace old AGS helper calls with `from_launch_claim/1` plus operation-specific APIs (`list_line_items/3`, `create_line_item/4`, `post_score/5`, `list_results/4`, etc.).
+3. Run your normal validation suite (`mix test` and integration checks).

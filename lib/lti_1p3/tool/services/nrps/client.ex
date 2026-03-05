@@ -5,6 +5,7 @@ defmodule Lti_1p3.Tool.Services.NRPS.Client do
 
   import Lti_1p3.Config
 
+  alias Lti_1p3.Services.HTTP.Request
   alias Lti_1p3.Tool.Services.AccessToken
   alias Lti_1p3.Tool.Services.NRPS.Errors
   alias Lti_1p3.Tool.Services.NRPS.Parser
@@ -75,11 +76,9 @@ defmodule Lti_1p3.Tool.Services.NRPS.Client do
   end
 
   defp headers(%AccessToken{} = access_token) do
-    [
-      {"Content-Type", "application/json"},
-      {"Authorization", "Bearer #{access_token.access_token}"},
-      {"Accept", @accept_header}
-    ]
+    [{"Content-Type", "application/json"}]
+    |> Request.with_bearer(access_token.access_token)
+    |> Kernel.++([{"Accept", @accept_header}])
   end
 
   defp retryable_status?(status_code), do: status_code == 429 or status_code >= 500

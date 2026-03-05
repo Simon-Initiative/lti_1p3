@@ -17,6 +17,11 @@ defmodule Lti_1p3.Services.HTTP.QueryFiltersTest do
     assert {:error, :invalid_limit} = QueryFilters.normalize(limit: 0)
   end
 
+  test "normalizes AGS filters" do
+    assert {:ok, %{"resource_id" => "resource-1", "tag" => "gradebook", "user_id" => "u-1"}} =
+             QueryFilters.normalize(resource_id: "resource-1", tag: "gradebook", user_id: "u-1")
+  end
+
   test "appends filters into existing query" do
     url = "https://example.edu/memberships?page=1"
 

@@ -6,305 +6,425 @@ defmodule Lti_1p3.Tool.Services.AGS do
   https://www.imsglobal.org/spec/lti-ags/v2p0/
   """
 
-  @lti_ags_claim_url "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"
-  @lineitem_scope_url "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem"
-  @scores_scope_url "https://purl.imsglobal.org/spec/lti-ags/scope/score"
-
-  alias Lti_1p3.Tool.Services.AGS.Score
-  alias Lti_1p3.Tool.Services.AGS.LineItem
+  alias Lti_1p3.Services.HTTP.QueryFilters
+  alias Lti_1p3.Services.HTTP.Request
   alias Lti_1p3.Tool.Services.AccessToken
+  alias Lti_1p3.Tool.Services.AGS.Client
+  alias Lti_1p3.Tool.Services.AGS.CompatibilityPolicy
+  alias Lti_1p3.Tool.Services.AGS.Endpoint
+  alias Lti_1p3.Tool.Services.AGS.Errors
+  alias Lti_1p3.Tool.Services.AGS.LineItem
+  alias Lti_1p3.Tool.Services.AGS.Page
+  alias Lti_1p3.Tool.Services.AGS.Parser
+  alias Lti_1p3.Tool.Services.AGS.Result
+  alias Lti_1p3.Tool.Services.AGS.Score
+  alias Lti_1p3.Tool.Services.AGS.ScopePolicy
+  alias Lti_1p3.Tool.Services.AGS.Telemetry
 
-  import Lti_1p3.Config
+  @lineitem_container_accept "application/vnd.ims.lis.v2.lineitemcontainer+json"
+  @lineitem_accept "application/vnd.ims.lis.v2.lineitem+json"
+  @score_content_type "application/vnd.ims.lis.v1.score+json"
+  @result_container_accept "application/vnd.ims.lis.v2.resultcontainer+json"
 
-  require Logger
+  @type error_map :: Errors.error_map()
 
   @doc """
-  Post a score to an existing line item, using an already acquired access token.
+  Parses a launch claim map into a typed AGS endpoint.
   """
-  def post_score(%Score{} = score, %LineItem{} = line_item, %AccessToken{} = access_token) do
-    Logger.info("Posting score for user #{score.userId} for line item '#{line_item.label}'")
+  @spec from_launch_claim(map()) :: {:ok, Endpoint.t()} | {:error, error_map()}
+  def from_launch_claim(claim_map), do: Parser.parse_endpoint(claim_map)
 
-    body = score |> Jason.encode!()
+  @doc """
+  Lists a single line items page.
 
-    case http_client!().post(
-           build_url_with_path(line_item.id, "scores"),
-           body,
-           score_headers(access_token)
-         ) do
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] ->
-        {:ok, body}
+  Supported options:
+  - `:resource_id`, `:tag`, `:limit`
+  - `:retry_count` (default `0`)
+  - `:page_index` (internal use)
+  - `:compatibility` (LMS compatibility profile map)
+  """
+  @spec list_line_items(Endpoint.t(), AccessToken.t(), keyword()) ::
+          {:ok, Page.t(LineItem.t())} | {:error, error_map()}
+  def list_line_items(%Endpoint{} = endpoint, %AccessToken{} = access_token, opts \\ []) do
+    with :ok <- preflight(endpoint, access_token, :list_line_items),
+         {:ok, request_url} <- build_line_items_request_url(endpoint.line_items_url, opts),
+         request_url <- CompatibilityPolicy.apply(:list_line_items, request_url, opts),
+         {:ok, response} <-
+           Client.request(:list_line_items, :get, request_url, access_token,
+             retry_count: Keyword.get(opts, :retry_count, 0),
+             expected_statuses: [200],
+             headers: line_item_headers()
+           ),
+         {:ok, payload} <- decode_json_array(response.body, :list_line_items),
+         {:ok, page} <-
+           Parser.parse_line_items_page(
+             payload,
+             response.headers,
+             Keyword.get(opts, :page_index, 1),
+             request_url
+           ) do
+      Enum.each(page.items, fn line_item ->
+        Telemetry.line_item(%{
+          operation: :list_line_items,
+          line_item_id: line_item.id,
+          page_index: page.page_index
+        })
+      end)
 
-      e ->
-        Logger.error(
-          "Error encountered posting score for user #{score.userId} for line item '#{line_item.label}' #{inspect(e)}"
-        )
-
-        {:error, "Error posting score"}
+      {:ok, page}
     end
   end
 
   @doc """
-  Creates a line item for a resource id, if one does not exist.  Whether or not the
-  line item is created or already exists, this function returns a line item struct wrapped
-  in a {:ok, line_item} tuple.  On error, returns a {:error, error} tuple.
+  Reads a single line item.
   """
-  def fetch_or_create_line_item(
-        line_items_service_url,
-        resource_id,
-        maximum_score_provider,
-        label,
-        %AccessToken{} = access_token
+  @spec read_line_item(String.t(), Endpoint.t(), AccessToken.t(), keyword()) ::
+          {:ok, LineItem.t()} | {:error, error_map()}
+  def read_line_item(
+        line_item_url,
+        %Endpoint{} = endpoint,
+        %AccessToken{} = access_token,
+        opts \\ []
+      )
+      when is_binary(line_item_url) do
+    with :ok <- preflight(endpoint, access_token, :read_line_item),
+         {:ok, response} <-
+           Client.request(:read_line_item, :get, line_item_url, access_token,
+             retry_count: Keyword.get(opts, :retry_count, 0),
+             expected_statuses: [200],
+             headers: [{"Accept", @lineitem_accept}, {"Content-Type", @lineitem_accept}]
+           ),
+         {:ok, payload} <- decode_json_map(response.body, :read_line_item),
+         {:ok, line_item} <- Parser.parse_line_item(payload, :read_line_item) do
+      Telemetry.line_item(%{operation: :read_line_item, line_item_id: line_item.id})
+      {:ok, line_item}
+    end
+  end
+
+  @doc """
+  Creates a line item.
+  """
+  @spec create_line_item(Endpoint.t(), AccessToken.t(), map(), keyword()) ::
+          {:ok, LineItem.t()} | {:error, error_map()}
+  def create_line_item(%Endpoint{} = endpoint, %AccessToken{} = access_token, attrs, opts \\ [])
+      when is_map(attrs) do
+    with :ok <- preflight(endpoint, access_token, :create_line_item),
+         {:ok, valid_attrs} <- Parser.validate_line_item_attrs(attrs, :create_line_item),
+         body <- Jason.encode!(line_item_payload(valid_attrs)),
+         {:ok, response} <-
+           Client.request(:create_line_item, :post, endpoint.line_items_url, access_token,
+             retry_count: Keyword.get(opts, :retry_count, 0),
+             expected_statuses: [200, 201],
+             headers: line_item_headers(),
+             body: body
+           ),
+         {:ok, payload} <- decode_json_map(response.body, :create_line_item),
+         {:ok, line_item} <- Parser.parse_line_item(payload, :create_line_item) do
+      Telemetry.line_item(%{operation: :create_line_item, line_item_id: line_item.id})
+      {:ok, line_item}
+    end
+  end
+
+  @doc """
+  Updates a line item.
+  """
+  @spec update_line_item(String.t(), Endpoint.t(), AccessToken.t(), map(), keyword()) ::
+          {:ok, LineItem.t()} | {:error, error_map()}
+  def update_line_item(
+        line_item_url,
+        %Endpoint{} = endpoint,
+        %AccessToken{} = access_token,
+        attrs,
+        opts \\ []
+      )
+      when is_binary(line_item_url) and is_map(attrs) do
+    with :ok <- preflight(endpoint, access_token, :update_line_item),
+         {:ok, valid_attrs} <- Parser.validate_line_item_attrs(attrs, :update_line_item),
+         body <- Jason.encode!(line_item_payload(Map.put(valid_attrs, :id, line_item_url))),
+         {:ok, response} <-
+           Client.request(:update_line_item, :put, line_item_url, access_token,
+             retry_count: Keyword.get(opts, :retry_count, 0),
+             expected_statuses: [200],
+             headers: line_item_headers(),
+             body: body
+           ),
+         {:ok, payload} <- decode_json_map(response.body, :update_line_item),
+         {:ok, line_item} <- Parser.parse_line_item(payload, :update_line_item) do
+      Telemetry.line_item(%{operation: :update_line_item, line_item_id: line_item.id})
+      {:ok, line_item}
+    end
+  end
+
+  @doc """
+  Deletes a line item.
+  """
+  @spec delete_line_item(String.t(), Endpoint.t(), AccessToken.t(), keyword()) ::
+          :ok | {:error, error_map()}
+  def delete_line_item(
+        line_item_url,
+        %Endpoint{} = endpoint,
+        %AccessToken{} = access_token,
+        opts \\ []
+      )
+      when is_binary(line_item_url) do
+    with :ok <- preflight(endpoint, access_token, :delete_line_item),
+         {:ok, _response} <-
+           Client.request(:delete_line_item, :delete, line_item_url, access_token,
+             retry_count: Keyword.get(opts, :retry_count, 0),
+             expected_statuses: [200, 202, 204],
+             headers: line_item_headers()
+           ) do
+      Telemetry.line_item(%{operation: :delete_line_item, line_item_id: line_item_url})
+      :ok
+    end
+  end
+
+  @doc """
+  Posts a score to an existing line item.
+  """
+  @spec post_score(String.t(), Endpoint.t(), AccessToken.t(), Score.t() | map(), keyword()) ::
+          :ok | {:error, error_map()}
+  def post_score(
+        line_item_url,
+        %Endpoint{} = endpoint,
+        %AccessToken{} = access_token,
+        score,
+        opts \\ []
+      )
+      when is_binary(line_item_url) do
+    with :ok <- preflight(endpoint, access_token, :post_score),
+         {:ok, valid_score} <- Parser.validate_score(score, :post_score),
+         score_url <- Request.append_path(line_item_url, "scores"),
+         body <- Jason.encode!(valid_score),
+         {:ok, _response} <-
+           Client.request(:post_score, :post, score_url, access_token,
+             retry_count: Keyword.get(opts, :retry_count, 0),
+             expected_statuses: [200, 201, 202, 204],
+             headers: [{"Content-Type", @score_content_type}],
+             body: body
+           ) do
+      Telemetry.result(%{operation: :post_score, line_item_url: line_item_url})
+      :ok
+    end
+  end
+
+  @doc """
+  Lists a single results page.
+
+  Supported options:
+  - `:limit`, `:user_id`
+  - `:retry_count` (default `0`)
+  - `:page_index` (internal use)
+  """
+  @spec list_results(String.t(), Endpoint.t(), AccessToken.t(), keyword()) ::
+          {:ok, Page.t(Result.t())} | {:error, error_map()}
+  def list_results(
+        line_item_url,
+        %Endpoint{} = endpoint,
+        %AccessToken{} = access_token,
+        opts \\ []
+      )
+      when is_binary(line_item_url) do
+    with :ok <- preflight(endpoint, access_token, :list_results),
+         request_url <- Request.append_path(line_item_url, "results"),
+         {:ok, request_url} <- build_results_request_url(request_url, opts),
+         {:ok, response} <-
+           Client.request(:list_results, :get, request_url, access_token,
+             retry_count: Keyword.get(opts, :retry_count, 0),
+             expected_statuses: [200],
+             headers: [{"Accept", @result_container_accept}, {"Content-Type", "application/json"}]
+           ),
+         {:ok, payload} <- decode_json_array(response.body, :list_results),
+         {:ok, page} <-
+           Parser.parse_results_page(
+             payload,
+             response.headers,
+             Keyword.get(opts, :page_index, 1),
+             request_url
+           ) do
+      Enum.each(page.items, fn result ->
+        Telemetry.result(%{
+          operation: :list_results,
+          user_id: result.userId,
+          page_index: page.page_index
+        })
+      end)
+
+      {:ok, page}
+    end
+  end
+
+  @doc """
+  Traverses results across pages up to `:max_pages`.
+  """
+  @spec fetch_all_results(String.t(), Endpoint.t(), AccessToken.t(), keyword()) ::
+          {:ok, [Result.t()]} | {:error, error_map()}
+  def fetch_all_results(
+        line_item_url,
+        %Endpoint{} = endpoint,
+        %AccessToken{} = access_token,
+        opts \\ []
       ) do
-    Logger.info("fetch_or_create_line_item #{resource_id} #{label}")
+    max_pages = Keyword.get(opts, :max_pages, 100)
 
-    # Grade pass back 2.0 line items endpoint allows a GET request with a query
-    # param filter.  We use that to request only the line item that corresponds
-    # to this particular resource_id.  "resource_id", from grade pass back 2.0
-    # perspective is simply an identifier that the tool uses for a line item and its use
-    # here as a Torus "resource_id" is strictly coincidence.
+    do_fetch_all_results(line_item_url, endpoint, access_token, opts, 1, max_pages, [], true)
+  end
 
-    prefixed_resource_id = LineItem.to_resource_id(resource_id)
+  @doc """
+  Returns AGS scopes by operation.
+  """
+  @spec required_scopes(atom()) :: [String.t()]
+  def required_scopes(:all), do: ScopePolicy.all_scopes()
+  def required_scopes(operation), do: ScopePolicy.required_scopes_for(operation)
+
+  defp do_fetch_all_results(
+         _line_item_or_results_url,
+         _endpoint,
+         _access_token,
+         _opts,
+         page_index,
+         max_pages,
+         _acc,
+         _append_results?
+       )
+       when page_index > max_pages do
+    {:error, Errors.max_pages_exceeded(:list_results, max_pages)}
+  end
+
+  defp do_fetch_all_results(
+         line_item_or_results_url,
+         endpoint,
+         access_token,
+         opts,
+         page_index,
+         max_pages,
+         acc,
+         append_results?
+       ) do
+    request_opts = Keyword.put(opts, :page_index, page_index)
 
     request_url =
-      build_url_with_params(line_items_service_url, "resource_id=#{prefixed_resource_id}&limit=1")
-
-    Logger.info("fetch_or_create_line_item: URL #{request_url}")
-
-    with {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] <-
-           http_client!().get(request_url, headers(access_token)),
-         {:ok, result} <- Jason.decode(body) do
-      case result do
-        [] ->
-          Logger.info("fetch_or_create_line_item #{resource_id} #{label}")
-
-          create_line_item(
-            line_items_service_url,
-            resource_id,
-            maximum_score_provider.(),
-            label,
-            access_token
-          )
-
-        # it is important to match against a possible array of items, in case an LMS does
-        # not properly support the limit parameter
-        [raw_line_item | _] ->
-          Logger.info(
-            "fetch_or_create_line_item: Retrieved raw line item #{inspect(raw_line_item)} for #{resource_id} #{label}"
-          )
-
-          line_item = to_line_item(raw_line_item)
-
-          if line_item.label != label do
-            update_line_item(line_item, %{label: label}, access_token)
-          else
-            {:ok, line_item}
-          end
+      if append_results? do
+        Request.append_path(line_item_or_results_url, "results")
+      else
+        line_item_or_results_url
       end
-    else
-      e ->
-        Logger.error(
-          "Error encountered fetching line item for #{resource_id} #{label}: #{inspect(e)}"
+
+    with :ok <- preflight(endpoint, access_token, :list_results),
+         {:ok, request_url} <- build_results_request_url(request_url, request_opts),
+         {:ok, response} <-
+           Client.request(:list_results, :get, request_url, access_token,
+             retry_count: Keyword.get(request_opts, :retry_count, 0),
+             expected_statuses: [200],
+             headers: [{"Accept", @result_container_accept}, {"Content-Type", "application/json"}]
+           ),
+         {:ok, payload} <- decode_json_array(response.body, :list_results),
+         {:ok, %Page{} = page} <-
+           Parser.parse_results_page(payload, response.headers, page_index, request_url) do
+      merged = acc ++ page.items
+
+      if page.next_url do
+        do_fetch_all_results(
+          page.next_url,
+          endpoint,
+          access_token,
+          drop_filter_opts(opts),
+          page_index + 1,
+          max_pages,
+          merged,
+          false
         )
-
-        {:error, "Error retrieving existing line items"}
+      else
+        {:ok, merged}
+      end
     end
   end
 
-  defp to_line_item(raw_line_item) do
-    %LineItem{
-      id: Map.get(raw_line_item, "id"),
-      scoreMaximum: Map.get(raw_line_item, "scoreMaximum"),
-      resourceId: Map.get(raw_line_item, "resourceId"),
-      label: Map.get(raw_line_item, "label")
-    }
-  end
+  defp build_line_items_request_url(base_url, opts) do
+    filters = opts |> Keyword.take([:resource_id, :tag, :limit])
 
-  def fetch_line_items(line_items_service_url, %AccessToken{} = access_token) do
-    Logger.info("Fetch line items from #{line_items_service_url}")
-
-    # Unfortunately, at least Canvas implements a default limit of 10 line items
-    # when one makes a request without a 'limit' parameter specified. Setting it explicitly to 1000
-    # bypasses this default limit, of course, and works in all cases until a course more than
-    # a thousand grade book entries.
-    url = build_url_with_params(line_items_service_url, "limit=1000")
-
-    with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
-           http_client!().get(url, headers(access_token)),
-         {:ok, results} <- Jason.decode(body) do
-      {:ok, Enum.map(results, fn r -> to_line_item(r) end)}
+    with {:ok, normalized_filters} <- QueryFilters.normalize(filters) do
+      {:ok, QueryFilters.append_to_url(base_url, normalized_filters)}
     else
-      e ->
-        Logger.error("Error encountered fetching line items from #{url} #{inspect(e)}")
-        {:error, "Error retrieving all line items"}
+      {:error, reason} -> {:error, Errors.invalid_filter(reason)}
     end
   end
 
-  @doc """
-  Creates a line item for a resource id. This function returns a line item struct wrapped
-  in a {:ok, line_item} tuple.  On error, returns a {:error, error} tuple.
-  """
-  def create_line_item(
-        line_items_service_url,
-        resource_id,
-        score_maximum,
-        label,
-        %AccessToken{} = access_token
-      ) do
-    Logger.info("Create line item for #{resource_id} #{label}")
+  defp build_results_request_url(base_url, opts) do
+    filters = opts |> Keyword.take([:limit, :user_id])
 
-    line_item = %LineItem{
-      scoreMaximum: score_maximum,
-      resourceId: LineItem.to_resource_id(resource_id),
-      label: label
-    }
-
-    body = line_item |> Jason.encode!()
-
-    with {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 201] <-
-           http_client!().post(line_items_service_url, body, headers(access_token)),
-         {:ok, result} <- Jason.decode(body) do
-      {:ok, to_line_item(result)}
+    with {:ok, normalized_filters} <- QueryFilters.normalize(filters) do
+      {:ok, QueryFilters.append_to_url(base_url, normalized_filters)}
     else
-      e ->
-        Logger.error(
-          "Error encountered creating line item for #{resource_id} #{label}: #{inspect(e)}"
-        )
-
-        {:error, "Error creating new line item"}
+      {:error, reason} -> {:error, Errors.invalid_filter(reason)}
     end
   end
 
-  @doc """
-  Updates an existing line item. On success returns
-  a {:ok, line_item} tuple.  On error, returns a {:error, error} tuple.
-  """
-  def update_line_item(%LineItem{} = line_item, changes, %AccessToken{} = access_token) do
-    Logger.info("Updating line item #{line_item.id} for changes #{inspect(changes)}")
+  defp decode_json_map(body, operation) when is_binary(body) do
+    case Jason.decode(body) do
+      {:ok, payload} when is_map(payload) ->
+        {:ok, payload}
 
-    updated_line_item = %LineItem{
-      id: line_item.id,
-      scoreMaximum: Map.get(changes, :scoreMaximum, line_item.scoreMaximum),
-      resourceId: line_item.resourceId,
-      label: Map.get(changes, :label, line_item.label)
-    }
+      {:ok, _payload} ->
+        {:error, Errors.invalid_payload(operation, :invalid_json_shape)}
 
-    body = updated_line_item |> Jason.encode!()
-
-    # The line_item endpoint defines a PUT operation to update existing line items.  The
-    # url to use is the id of the line item
-    url = line_item.id
-
-    with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
-           http_client!().put(url, body, headers(access_token)),
-         {:ok, result} <- Jason.decode(body) do
-      {:ok, to_line_item(result)}
-    else
-      e ->
-        Logger.error(
-          "Error encountered updating line item #{line_item.id} for changes #{inspect(changes)}: #{inspect(e)}"
-        )
-
-        {:error, "Error updating existing line item"}
+      {:error, error} ->
+        {:error, Errors.invalid_payload(operation, :invalid_json, %{error: inspect(error)})}
     end
   end
 
-  @doc """
-  Returns true if grade pass back service is enabled with the necessary scopes. The
-  necessary scopes are the line item scope to read all line items and create new ones
-  and the scores scope, to be able to post new scores. Also verifies that the line items
-  endpoint is present.
-  """
-  def grade_passback_enabled?(lti_launch_params) do
-    case Map.get(lti_launch_params, @lti_ags_claim_url) do
-      nil ->
-        false
+  defp decode_json_map(_body, operation),
+    do: {:error, Errors.invalid_payload(operation, :invalid_response_body)}
 
-      config ->
-        Map.has_key?(config, "lineitems") and has_scope?(config, @lineitem_scope_url) and
-          has_scope?(config, @scores_scope_url)
+  defp decode_json_array(body, operation) when is_binary(body) do
+    case Jason.decode(body) do
+      {:ok, payload} when is_list(payload) ->
+        {:ok, payload}
+
+      {:ok, _payload} ->
+        {:error, Errors.invalid_payload(operation, :invalid_json_shape)}
+
+      {:error, error} ->
+        {:error, Errors.invalid_payload(operation, :invalid_json, %{error: inspect(error)})}
     end
   end
 
-  @doc """
-  Returns the line items URL from LTI launch params.
-  If not present returns nil.
-  If a registration is present, uses the auth server domain + the line items path.
-  """
-  def get_line_items_url(lti_launch_params, registration \\ %{}) do
-    line_items_url =
-      lti_launch_params
-      |> Map.get(@lti_ags_claim_url, %{})
-      |> Map.get("lineitems")
+  defp decode_json_array(_body, operation),
+    do: {:error, Errors.invalid_payload(operation, :invalid_response_body)}
 
-    unless is_nil(line_items_url) do
-      %URI{path: line_items_path} = URI.parse(line_items_url)
+  defp preflight(endpoint, access_token, operation) do
+    case ScopePolicy.preflight(endpoint, access_token, operation) do
+      :ok ->
+        :ok
 
-      registration
-      |> get_line_items_domain(line_items_url)
-      |> URI.parse()
-      |> Map.put(:path, line_items_path)
-      |> URI.to_string()
+      {:error, error} ->
+        Telemetry.scope_denied(%{
+          operation: operation,
+          required_scope: get_in(error, [:details, :required_scope]),
+          source: get_in(error, [:details, :source])
+        })
+
+        {:error, error}
     end
   end
 
-  defp get_line_items_domain(%{line_items_service_domain: domain}, default)
-       when is_nil(domain) or domain == "",
-       do: default
-
-  defp get_line_items_domain(%{line_items_service_domain: domain}, _default), do: domain
-  defp get_line_items_domain(_registration, default), do: default
-
-  @doc """
-  Returns true if the LTI AGS claim has a particular scope url, false if it does not.
-  """
-  def has_scope?(lti_ags_claim, scope_url) do
-    case Map.get(lti_ags_claim, "scope", [])
-         |> Enum.find(nil, fn url -> scope_url == url end) do
-      nil -> false
-      _ -> true
-    end
-  end
-
-  @doc """
-  Returns the required scopes for the AGS service.
-  """
-  def required_scopes() do
+  defp line_item_headers do
     [
-      @lineitem_scope_url,
-      @scores_scope_url
+      {"Accept", @lineitem_container_accept},
+      {"Content-Type", @lineitem_accept}
     ]
   end
 
-  # ---------------------------------------------------------
-  # Helpers to build headers correctly
-  defp headers(%AccessToken{} = access_token) do
-    [
-      {"Accept", "application/vnd.ims.lis.v2.lineitemcontainer+json"},
-      {"Content-Type", "application/vnd.ims.lis.v2.lineitem+json"}
-    ] ++ access_token_header(access_token.access_token)
+  defp line_item_payload(attrs) do
+    %LineItem{
+      id: Map.get(attrs, :id),
+      scoreMaximum: Map.get(attrs, :scoreMaximum),
+      resourceId: Map.get(attrs, :resourceId),
+      label: Map.get(attrs, :label),
+      tag: Map.get(attrs, :tag),
+      resourceLinkId: Map.get(attrs, :resourceLinkId)
+    }
   end
 
-  defp score_headers(%AccessToken{} = access_token) do
-    [{"Content-Type", "application/vnd.ims.lis.v1.score+json"}] ++
-      access_token_header(access_token.access_token)
-  end
-
-  defp access_token_header(access_token),
-    do: [{"Authorization", "Bearer #{access_token}"}]
-
-  # ---------------------------------------------------------
-  # Helpers to build urls correctly (if base url contian query params)
-  defp build_url_with_path(base_url, path_to_add) do
-    case String.split(base_url, "?") do
-      [base_url, query_params] -> "#{base_url}/#{path_to_add}?#{query_params}"
-      _ -> "#{base_url}/#{path_to_add}"
-    end
-  end
-
-  defp build_url_with_params(base_url, params_to_add) do
-    case String.split(base_url, "?") do
-      [base_url, query_params] -> "#{base_url}?#{query_params}&#{params_to_add}"
-      _ -> "#{base_url}?#{params_to_add}"
-    end
-  end
+  defp drop_filter_opts(opts), do: Keyword.drop(opts, [:limit, :user_id])
 end
