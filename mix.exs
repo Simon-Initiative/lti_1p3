@@ -39,7 +39,7 @@ defmodule Lti_1p3.MixProject do
       {:ex_doc, "~> 0.28", only: :dev, runtime: false},
       {:httpoison, "~> 2.0"},
       {:jason, "~> 1.3"},
-      {:joken, "~> 2.2.0"},
+      {:joken, "~> 2.2"},
       {:mox, "~> 0.5", only: :test},
       {:timex, "~> 3.5"},
       {:uuid, "~> 1.1"}

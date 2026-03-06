@@ -110,7 +110,8 @@ defmodule Lti_1p3.Tool.LaunchValidation do
 
   defp validate_message(jwt_body) do
     case jwt_body["https://purl.imsglobal.org/spec/lti/claim/message_type"] do
-      nil ->
+      # JOSE >= 1.11.12 decodes JSON null as the atom :null instead of nil
+      value when value == :null or is_nil(value) ->
         {:error, %{reason: :invalid_message_type, msg: "Missing message type"}}
 
       message_type ->
