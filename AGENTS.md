@@ -36,26 +36,37 @@
 
 ## Engineering Workflow
 
-1. Create feature architecture docs under `docs/features/<feature-slug>/`:
+1. Choose one planning location before starting:
+   - Use `docs/exec-plans/current/<work-item-slug>/` for active work.
+   - Historical feature plans live under `docs/exec-plans/archive/features/<feature-slug>/`.
+   - Do not create parallel planning artifacts for the same change in both locations unless the user explicitly asks for that duplication.
+2. Create feature architecture docs under the selected planning location:
    - `prd.md`
    - `fdd.md`
    - `plan.md`
-2. Treat phases in `plan.md` as cohesive functional slices and execute them in order.
-3. If the feature is too large for one PR, group one or more sequential phases into PR groups that can be delivered independently.
-4. During implementation, update `plan.md` checkboxes as tasks/phases are completed.
-5. Keep the final phase as manual QA acceptance testing before feature completion.
-6. Confirm scope and affected LTI surface area (Tool, Platform, shared security, provider contracts).
-7. Read relevant behavior contracts before modifying implementations.
-8. Add/update tests in `test/lti_1p3/**` for success and failure paths.
-9. Run formatting and tests before finalizing.
-10. Update docs (`README.md` and/or `docs/*.md`) when behavior changes.
-11. Update top-level `CHANGELOG.md` for every implemented feature or bug fix:
+3. Treat phases in `plan.md` as cohesive functional slices and execute them in order.
+4. If the feature is too large for one PR, group one or more sequential phases into PR groups that can be delivered independently.
+5. During implementation, update `plan.md` checkboxes as tasks/phases are completed.
+6. Keep the final phase as manual QA acceptance testing before feature completion.
+7. Confirm scope and affected LTI surface area (Tool, Platform, shared security, provider contracts).
+8. Read relevant behavior contracts before modifying implementations.
+9. Add/update tests in `test/lti_1p3/**` for success and failure paths.
+10. Run the most specific affected tests first, then run `mix test` before finalizing.
+11. Run `mix compile` when touching public APIs, behaviors, specs, module names, aliases, or configuration-sensitive code paths.
+12. Run `mix format` for all touched files before finalizing.
+13. Update docs when behavior or integration expectations change:
 
-- Add a high-level summary under `## [Unreleased]`.
+- Update `README.md` for public setup, API, or integration changes.
+- Update focused docs under `docs/*.md` for behavior, telemetry, troubleshooting, or architecture changes.
+- Update active planning artifacts under `docs/exec-plans/current/` as implementation progresses and move completed plans to `docs/exec-plans/archive/features/` when they become historical references.
+
+14. Update top-level `CHANGELOG.md` for every implemented feature or bug fix:
+
+- Add a high-level summary under the current unreleased release heading (`## [1.0.0] (Unreleased)` at present, until the file’s convention changes).
 - Use Keep a Changelog sections (`Added`, `Changed`, `Fixed`, etc.).
 - Keep entries concise and integration-focused (not line-by-line diffs).
 
-12. Keep migration guidance up to date whenever necessary for any changes made:
+15. Keep migration guidance up to date whenever necessary for any changes made:
 
 - Add/update a `Migration Guide` section directly in `CHANGELOG.md` under the relevant release when client app migrations and/or infrastructure changes are required.
 - Include: required changes and concise upgrade steps.
@@ -64,7 +75,8 @@
 
 - Follow standard Elixir formatting; run `mix format` for all touched files.
 - Prefer pure functions and pattern matching over nested conditionals.
-- Keep public API return shapes stable; use tagged tuples for recoverable errors.
+- Keep public API contracts stable; use tagged tuples for recoverable errors.
+- Do not change tagged tuple shapes, `reason` atoms, `stage` atoms, or public struct fields without corresponding tests, docs, changelog updates, and migration notes when appropriate.
 - Reserve exceptions for misconfiguration or truly exceptional conditions.
 - Keep `@doc` and `@spec` on public functions and behaviors accurate.
 - Use descriptive reason atoms in error maps (example: `:invalid_registration`, `:invalid_nonce`).
@@ -77,6 +89,7 @@
 - Run full test suite: `mix test`
 - Run a single test file: `mix test test/lti_1p3/tool/launch_validation_test.exs`
 - Run a single test line: `mix test test/lti_1p3/tool/launch_validation_test.exs:42`
+- Run watcher during tight feedback loops: `mix test.watch`
 - Coverage (configured alias): `mix test.coverage`
 - XML coverage alias: `mix test.coverage.xml`
 - Format codebase: `mix format`
@@ -90,6 +103,14 @@
 - Key-provider supervision should be included in host apps that rely on key caching/refresh.
 - Avoid breaking return tuple shapes or error reason atoms; downstream apps may pattern-match them.
 - Keep security-sensitive defaults explicit in config (`nonce`/`login_hint` TTLs, key-cache TTL/refresh intervals).
+
+## Anti-Patterns To Avoid
+
+- Do not add app-specific Phoenix controllers, routers, or persistence assumptions to core library modules.
+- Do not bypass behavior contracts for persistence, nonce handling, or key retrieval in order to “simplify” a feature.
+- Do not weaken nonce, state, timestamp, audience, issuer, or deployment checks for convenience.
+- Do not log or document private JWK material, bearer tokens, or other secrets in examples or troubleshooting notes.
+- Do not introduce breaking public API changes silently; every integration-visible change needs matching tests and documentation.
 
 ## Debugging Tips
 
