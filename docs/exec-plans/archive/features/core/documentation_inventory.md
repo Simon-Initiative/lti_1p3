@@ -3,9 +3,9 @@
 ## Updated
 
 - `README.md`
-- `docs/features/core/plan.md`
-- `docs/features/core/conformance_matrix.md`
-- `docs/features/core/api_error_catalog.md`
+- `docs/exec-plans/archive/features/core/plan.md`
+- `docs/exec-plans/archive/features/core/conformance_matrix.md`
+- `docs/exec-plans/archive/features/core/api_error_catalog.md`
 
 ## Added
 
