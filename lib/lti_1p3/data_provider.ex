@@ -131,6 +131,9 @@ defmodule Lti_1p3.ToolDataProvider do
 end
 
 defmodule Lti_1p3.PlatformDataProvider do
+  alias Lti_1p3.Platform.Services.AGS.LineItem
+  alias Lti_1p3.Platform.Services.AGS.Result
+  alias Lti_1p3.Platform.Services.AGS.Score
   alias Lti_1p3.Platform.PlatformInstance
   alias Lti_1p3.Platform.LoginHint
 
@@ -183,6 +186,48 @@ defmodule Lti_1p3.PlatformDataProvider do
       iex> delete_expired_login_hints(ttl_sec)
   """
   @callback delete_expired_login_hints(integer() | nil) :: any()
+
+  @doc """
+  Lists AGS line items scoped to deployment and context.
+  """
+  @callback list_ags_line_items(String.t(), String.t(), map()) ::
+              {:ok, [LineItem.t()]} | {:error, term()}
+
+  @doc """
+  Creates an AGS line item scoped to deployment and context.
+  """
+  @callback create_ags_line_item(String.t(), String.t(), map()) ::
+              {:ok, LineItem.t()} | {:error, term()}
+
+  @doc """
+  Gets a single AGS line item by identifier or URL.
+  """
+  @callback get_ags_line_item(String.t(), String.t(), String.t()) ::
+              {:ok, LineItem.t()} | {:error, term()}
+
+  @doc """
+  Updates a single AGS line item by identifier or URL.
+  """
+  @callback update_ags_line_item(String.t(), String.t(), String.t(), map()) ::
+              {:ok, LineItem.t()} | {:error, term()}
+
+  @doc """
+  Deletes a single AGS line item by identifier or URL.
+  """
+  @callback delete_ags_line_item(String.t(), String.t(), String.t()) ::
+              :ok | {:error, term()}
+
+  @doc """
+  Persists a score event for an AGS line item.
+  """
+  @callback create_ags_score(String.t(), String.t(), String.t(), Score.t()) ::
+              :ok | {:error, term()}
+
+  @doc """
+  Lists AGS results for a line item scoped to deployment and context.
+  """
+  @callback list_ags_results(String.t(), String.t(), String.t(), map()) ::
+              {:ok, [Result.t()]} | {:error, term()}
 end
 
 defmodule Lti_1p3.DataProviderError do

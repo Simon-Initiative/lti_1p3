@@ -7,6 +7,9 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
   alias Lti_1p3.DataProviderError
   alias Lti_1p3.Jwk
   alias Lti_1p3.Nonce
+  alias Lti_1p3.Platform.Services.AGS.LineItem
+  alias Lti_1p3.Platform.Services.AGS.Result
+  alias Lti_1p3.Platform.Services.AGS.Score
   alias Lti_1p3.Platform.LoginHint
   alias Lti_1p3.Platform.PlatformInstance
   alias Lti_1p3.PlatformDataProvider
@@ -32,7 +35,9 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
       registrations: %{},
       deployments: [],
       platform_instances: %{},
-      login_hints: %{}
+      login_hints: %{},
+      ags_line_items: %{},
+      ags_scores: %{}
     }
   end
 
@@ -242,11 +247,259 @@ defmodule Lti_1p3.DataProviders.MemoryProvider do
     end)
   end
 
+  @impl PlatformDataProvider
+  def list_ags_line_items(deployment_id, context_id, filters) do
+    line_items =
+      Agent.get(__MODULE__, fn state ->
+        state
+        |> Map.get(:ags_line_items, %{})
+        |> Map.get(ags_key(deployment_id, context_id), %{})
+        |> Map.values()
+      end)
+      |> Enum.sort_by(& &1.id)
+      |> maybe_filter_line_items(filters)
+      |> maybe_limit(filters)
+
+    {:ok, line_items}
+  end
+
+  @impl PlatformDataProvider
+  def create_ags_line_item(deployment_id, context_id, attrs) do
+    line_item_id = Map.get(attrs, :id, "line-item-#{get_next_index(:ags_line_item)}")
+
+    line_item =
+      struct(LineItem, %{
+        id: line_item_id,
+        scoreMaximum: Map.get(attrs, :scoreMaximum),
+        label: Map.get(attrs, :label),
+        resourceId: Map.get(attrs, :resourceId),
+        tag: Map.get(attrs, :tag),
+        resourceLinkId: Map.get(attrs, :resourceLinkId)
+      })
+
+    key = ags_key(deployment_id, context_id)
+
+    Agent.get_and_update(__MODULE__, fn state ->
+      line_items_by_context = Map.get(state, :ags_line_items, %{})
+      line_items = Map.get(line_items_by_context, key, %{})
+
+      if Map.has_key?(line_items, line_item.id) do
+        {{:error, :already_exists}, state}
+      else
+        updated_line_items_by_context =
+          Map.put(line_items_by_context, key, Map.put(line_items, line_item.id, line_item))
+
+        {{:ok, line_item}, %{state | ags_line_items: updated_line_items_by_context}}
+      end
+    end)
+  end
+
+  @impl PlatformDataProvider
+  def get_ags_line_item(deployment_id, context_id, id_or_url) do
+    line_item_id = normalize_line_item_id(id_or_url)
+    key = ags_key(deployment_id, context_id)
+
+    line_item =
+      Agent.get(__MODULE__, fn state ->
+        state
+        |> Map.get(:ags_line_items, %{})
+        |> Map.get(key, %{})
+        |> Map.get(line_item_id)
+      end)
+
+    case line_item do
+      %LineItem{} = item -> {:ok, item}
+      nil -> {:error, {:not_found, :line_item, line_item_id}}
+    end
+  end
+
+  @impl PlatformDataProvider
+  def update_ags_line_item(deployment_id, context_id, id_or_url, attrs) do
+    line_item_id = normalize_line_item_id(id_or_url)
+    key = ags_key(deployment_id, context_id)
+
+    Agent.get_and_update(__MODULE__, fn state ->
+      line_items_by_context = Map.get(state, :ags_line_items, %{})
+      line_items = Map.get(line_items_by_context, key, %{})
+
+      case Map.get(line_items, line_item_id) do
+        nil ->
+          {{:error, {:not_found, :line_item, line_item_id}}, state}
+
+        line_item ->
+          updated_line_item =
+            struct(line_item, %{
+              scoreMaximum: Map.get(attrs, :scoreMaximum, line_item.scoreMaximum),
+              label: Map.get(attrs, :label, line_item.label),
+              resourceId: Map.get(attrs, :resourceId, line_item.resourceId),
+              tag: Map.get(attrs, :tag, line_item.tag),
+              resourceLinkId: Map.get(attrs, :resourceLinkId, line_item.resourceLinkId)
+            })
+
+          updated_line_items_by_context =
+            Map.put(
+              line_items_by_context,
+              key,
+              Map.put(line_items, line_item_id, updated_line_item)
+            )
+
+          {{:ok, updated_line_item}, %{state | ags_line_items: updated_line_items_by_context}}
+      end
+    end)
+  end
+
+  @impl PlatformDataProvider
+  def delete_ags_line_item(deployment_id, context_id, id_or_url) do
+    line_item_id = normalize_line_item_id(id_or_url)
+    key = ags_key(deployment_id, context_id)
+
+    case Agent.get_and_update(__MODULE__, fn state ->
+           line_items_by_context = Map.get(state, :ags_line_items, %{})
+           line_items = Map.get(line_items_by_context, key, %{})
+
+           if Map.has_key?(line_items, line_item_id) do
+             updated_line_items_by_context =
+               Map.put(line_items_by_context, key, Map.delete(line_items, line_item_id))
+
+             scores_by_context = Map.get(state, :ags_scores, %{})
+             context_scores = Map.get(scores_by_context, key, %{})
+             updated_context_scores = Map.delete(context_scores, line_item_id)
+             updated_scores_by_context = Map.put(scores_by_context, key, updated_context_scores)
+
+             {{:ok, :deleted},
+              %{
+                state
+                | ags_line_items: updated_line_items_by_context,
+                  ags_scores: updated_scores_by_context
+              }}
+           else
+             {{:error, {:not_found, :line_item, line_item_id}}, state}
+           end
+         end) do
+      {:ok, :deleted} -> :ok
+      error -> error
+    end
+  end
+
+  @impl PlatformDataProvider
+  def create_ags_score(deployment_id, context_id, id_or_url, %Score{} = score) do
+    line_item_id = normalize_line_item_id(id_or_url)
+    key = ags_key(deployment_id, context_id)
+
+    case Agent.get_and_update(__MODULE__, fn state ->
+           line_items_by_context = Map.get(state, :ags_line_items, %{})
+           line_items = Map.get(line_items_by_context, key, %{})
+
+           if Map.has_key?(line_items, line_item_id) do
+             scores_by_context = Map.get(state, :ags_scores, %{})
+             context_scores = Map.get(scores_by_context, key, %{})
+             scores = Map.get(context_scores, line_item_id, [])
+
+             updated_scores_by_context =
+               Map.put(
+                 scores_by_context,
+                 key,
+                 Map.put(context_scores, line_item_id, scores ++ [score])
+               )
+
+             {{:ok, :created}, %{state | ags_scores: updated_scores_by_context}}
+           else
+             {{:error, {:not_found, :line_item, line_item_id}}, state}
+           end
+         end) do
+      {:ok, :created} -> :ok
+      error -> error
+    end
+  end
+
+  @impl PlatformDataProvider
+  def list_ags_results(deployment_id, context_id, id_or_url, filters) do
+    line_item_id = normalize_line_item_id(id_or_url)
+    key = ags_key(deployment_id, context_id)
+
+    Agent.get(__MODULE__, fn state ->
+      line_items_by_context = Map.get(state, :ags_line_items, %{})
+      line_items = Map.get(line_items_by_context, key, %{})
+
+      case Map.get(line_items, line_item_id) do
+        nil ->
+          {:error, {:not_found, :line_item, line_item_id}}
+
+        line_item ->
+          scores =
+            state
+            |> Map.get(:ags_scores, %{})
+            |> Map.get(key, %{})
+            |> Map.get(line_item_id, [])
+
+          results =
+            scores
+            |> Enum.map(fn score ->
+              %Result{
+                userId: score.userId,
+                resultScore: score.scoreGiven,
+                resultMaximum: score.scoreMaximum || line_item.scoreMaximum,
+                comment: score.comment
+              }
+            end)
+            |> maybe_filter_results(filters)
+            |> maybe_limit(filters)
+
+          {:ok, results}
+      end
+    end)
+  end
+
   @doc false
   def nonce_key(%{value: value, domain: nil}), do: value
   def nonce_key(%{value: value, domain: domain}), do: value <> domain
 
   defp registration_key(issuer, client_id), do: issuer <> client_id
+  defp ags_key(deployment_id, context_id), do: deployment_id <> "::" <> context_id
+
+  defp normalize_line_item_id(id_or_url) do
+    case URI.parse(id_or_url) do
+      %URI{path: path} when is_binary(path) and path != "" ->
+        path
+        |> String.trim_trailing("/")
+        |> String.split("/")
+        |> List.last()
+        |> case do
+          nil -> id_or_url
+          "" -> id_or_url
+          segment -> segment
+        end
+
+      _ ->
+        id_or_url
+    end
+  end
+
+  defp maybe_filter_line_items(items, filters) do
+    Enum.filter(items, fn item ->
+      resource_id = Map.get(filters, "resource_id")
+      tag = Map.get(filters, "tag")
+
+      matches_resource_id? = is_nil(resource_id) or to_string(item.resourceId) == resource_id
+      matches_tag? = is_nil(tag) or item.tag == tag
+      matches_resource_id? and matches_tag?
+    end)
+  end
+
+  defp maybe_filter_results(results, filters) do
+    case Map.get(filters, "user_id") do
+      nil -> results
+      user_id -> Enum.filter(results, &(&1.userId == user_id))
+    end
+  end
+
+  defp maybe_limit(items, filters) do
+    case Map.get(filters, "limit") do
+      nil -> items
+      limit when is_binary(limit) -> Enum.take(items, String.to_integer(limit))
+      _ -> items
+    end
+  end
 
   defp get_next_index(type) do
     next_index = Agent.get(__MODULE__, fn state -> Map.get(state.index_counters, type, 0) end)

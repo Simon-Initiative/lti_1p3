@@ -3,33 +3,16 @@ defmodule Lti_1p3.Tool.Services.AGS.ScopePolicy do
   Scope preflight checks for tool AGS operations.
   """
 
+  alias Lti_1p3.Services.AGS.ScopeSet
   alias Lti_1p3.Tool.Services.AccessToken
   alias Lti_1p3.Tool.Services.AGS.Endpoint
   alias Lti_1p3.Tool.Services.AGS.Errors
 
-  @lineitem_scope "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem"
-  @lineitem_readonly_scope "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly"
-  @score_scope "https://purl.imsglobal.org/spec/lti-ags/scope/score"
-  @result_readonly_scope "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly"
-
   @spec all_scopes() :: [String.t()]
-  def all_scopes do
-    [@lineitem_scope, @lineitem_readonly_scope, @score_scope, @result_readonly_scope]
-  end
+  def all_scopes, do: ScopeSet.all_scopes()
 
   @spec required_scopes_for(atom()) :: [String.t()]
-  def required_scopes_for(operation) do
-    case operation do
-      :list_line_items -> [@lineitem_scope, @lineitem_readonly_scope]
-      :read_line_item -> [@lineitem_scope, @lineitem_readonly_scope]
-      :create_line_item -> [@lineitem_scope]
-      :update_line_item -> [@lineitem_scope]
-      :delete_line_item -> [@lineitem_scope]
-      :post_score -> [@score_scope]
-      :list_results -> [@result_readonly_scope]
-      _ -> []
-    end
-  end
+  def required_scopes_for(operation), do: ScopeSet.required_scopes_for(operation)
 
   @spec preflight(Endpoint.t(), AccessToken.t(), atom()) :: :ok | {:error, Errors.error_map()}
   def preflight(%Endpoint{} = endpoint, %AccessToken{} = token, operation) do
@@ -56,25 +39,14 @@ defmodule Lti_1p3.Tool.Services.AGS.ScopePolicy do
   end
 
   @spec parse_scope_string(String.t() | nil) :: [String.t()]
-  def parse_scope_string(nil), do: []
-  def parse_scope_string(""), do: []
-
-  def parse_scope_string(scope_string) when is_binary(scope_string) do
-    scope_string
-    |> String.split(" ", trim: true)
-    |> Enum.uniq()
-  end
+  def parse_scope_string(scope_string), do: ScopeSet.parse_scope_string(scope_string)
 
   @spec has_scope?([String.t()], String.t()) :: boolean()
-  def has_scope?(scopes, required_scope) do
-    Enum.any?(scopes, &(&1 == required_scope))
-  end
+  def has_scope?(scopes, required_scope), do: ScopeSet.has_scope?(scopes, required_scope)
 
   defp allowed?([], _available), do: true
 
   defp allowed?(required_scopes, available_scopes) do
-    Enum.any?(required_scopes, fn required_scope ->
-      has_scope?(available_scopes, required_scope)
-    end)
+    ScopeSet.allows_any?(available_scopes, required_scopes)
   end
 end
