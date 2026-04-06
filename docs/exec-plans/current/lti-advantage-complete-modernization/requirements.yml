@@ -1,0 +1,41 @@
+work_item: lti-advantage-complete-modernization
+requirements:
+- id: FR-001
+  title: Define the epic scope for delivering LTI Advantage Complete support across child features
+- id: FR-002
+  title: Define the child feature breakdown for core, AGS, NRPS, and deep linking work across tool and platform responsibilities
+- id: FR-003
+  title: Define a recommended dependency order that reduces API and certification rework across child features
+- id: FR-004
+  title: Preserve epic-level cross-cutting constraints for API design, storage agnosticism, framework agnosticism, security, coverage, and documentation
+- id: FR-005
+  title: Define epic-level success criteria for certification readiness, coverage uplift, and release guidance
+acceptance_criteria:
+- id: AC-001
+  title: The epic identifies separate child features for tool core, platform core, AGS tool, AGS platform, NRPS tool, NRPS platform, deep linking tool, and deep linking platform work
+  verification_method: manual
+  proofs: []
+- id: AC-002
+  title: The epic includes a dedicated cross-cutting child feature for certification readiness, coverage, and release evidence
+  verification_method: manual
+  proofs: []
+- id: AC-003
+  title: The child feature dependency order places core tool and core platform work before service-specific tool and platform features
+  verification_method: manual
+  proofs: []
+- id: AC-004
+  title: The epic artifact explains which child features can be parallelized after core API boundaries stabilize
+  verification_method: manual
+  proofs: []
+- id: AC-005
+  title: The epic PRD states that detailed implementation requirements belong in child work items rather than in the epic itself
+  verification_method: manual
+  proofs: []
+- id: AC-006
+  title: The epic preserves storage/backend agnosticism and web-framework agnosticism as mandatory constraints for all child features
+  verification_method: manual
+  proofs: []
+- id: AC-007
+  title: The epic preserves certification-focused testing and documentation alignment as release-level expectations across child features
+  verification_method: manual
+  proofs: []

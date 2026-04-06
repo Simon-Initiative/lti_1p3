@@ -1,0 +1,60 @@
+work_item: core-tool-api-modernization
+requirements:
+- id: FR-001
+  title: Provide a cohesive top-level Tool API for registration and deployment management
+- id: FR-002
+  title: Provide a cohesive top-level Tool API for OIDC login initiation
+- id: FR-003
+  title: Provide a cohesive top-level Tool API for launch validation
+- id: FR-004
+  title: Standardize Tool-side core error and success shapes
+- id: FR-005
+  title: Preserve storage and web-framework agnostic Tool integration boundaries
+- id: FR-006
+  title: Increase automated coverage and documentation for Tool core flows
+acceptance_criteria:
+- id: AC-001
+  title: Tool consumers can create and look up registrations and deployments through
+    documented Tool entry points without bypassing provider boundaries
+  verification_method: automated
+  proofs: []
+- id: AC-002
+  title: Tool login initiation APIs validate required issuer, client, and login parameters
+    and return explicit success and error tuples
+  verification_method: automated
+  proofs: []
+- id: AC-003
+  title: Tool login initiation returns data sufficient for the consumer application
+    to persist state and redirect the browser without requiring Plug or Phoenix types
+  verification_method: automated
+  proofs: []
+- id: AC-004
+  title: Tool launch validation APIs validate token, registration, deployment, nonce,
+    state, and required claims with explicit success and error tuples
+  verification_method: automated
+  proofs: []
+- id: AC-005
+  title: Tool core success and error results are documented and consistent across
+    registration, login, and launch flows
+  verification_method: manual
+  proofs: []
+- id: AC-006
+  title: Tool core APIs remain storage agnostic by delegating persistence through
+    configured providers
+  verification_method: automated
+  proofs: []
+- id: AC-007
+  title: Tool core APIs remain web-framework agnostic and do not require Plug or Phoenix
+    structs in the library surface
+  verification_method: automated
+  proofs: []
+- id: AC-008
+  title: Automated tests cover Tool core happy paths and security-sensitive failure
+    paths for registration, login, and launch flows
+  verification_method: automated
+  proofs: []
+- id: AC-009
+  title: README and package docs provide a coherent end-to-end Tool core integration
+    example using the supported public API
+  verification_method: manual
+  proofs: []

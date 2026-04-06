@@ -1,0 +1,63 @@
+work_item: core-platform-api-modernization
+requirements:
+- id: FR-001
+  title: Provide a cohesive top-level Platform API for platform instance management
+- id: FR-002
+  title: Provide a cohesive top-level Platform API for login hint creation and lookup
+- id: FR-003
+  title: Provide a cohesive top-level Platform API for authorization redirect and
+    launch construction
+- id: FR-004
+  title: Standardize Platform-side core error and success shapes
+- id: FR-005
+  title: Preserve storage and web-framework agnostic Platform integration boundaries
+- id: FR-006
+  title: Increase automated coverage and documentation for Platform core flows
+acceptance_criteria:
+- id: AC-001
+  title: Platform consumers can create and look up platform instances through documented
+    Platform entry points without bypassing provider boundaries
+  verification_method: automated
+  proofs: []
+- id: AC-002
+  title: Platform login hint APIs create, look up, and clean up login hints through
+    documented Platform entry points with explicit success and error behavior where
+    applicable
+  verification_method: automated
+  proofs: []
+- id: AC-003
+  title: Platform authorization redirect APIs validate required inputs and return
+    data sufficient for the consumer application to render the final redirect without
+    requiring Plug or Phoenix types
+  verification_method: automated
+  proofs: []
+- id: AC-004
+  title: Platform authorization redirect behavior validates login hint, required claims,
+    deployment context, and signing expectations with explicit success and error tuples
+  verification_method: automated
+  proofs: []
+- id: AC-005
+  title: Platform core success and error results are documented and consistent across
+    platform instance, login hint, and authorization redirect flows
+  verification_method: manual
+  proofs: []
+- id: AC-006
+  title: Platform core APIs remain storage agnostic by delegating persistence through
+    configured providers
+  verification_method: automated
+  proofs: []
+- id: AC-007
+  title: Platform core APIs remain web-framework agnostic and do not require Plug
+    or Phoenix structs in the library surface
+  verification_method: automated
+  proofs: []
+- id: AC-008
+  title: Automated tests cover Platform core happy paths and security-sensitive failure
+    paths for platform instance, login hint, and authorization redirect flows
+  verification_method: automated
+  proofs: []
+- id: AC-009
+  title: README and package docs provide a coherent end-to-end Platform core integration
+    example using the supported public API
+  verification_method: manual
+  proofs: []
